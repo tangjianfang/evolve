@@ -1,6 +1,7 @@
 # evolve log — evolve (self-hosting experiment)
 
 - verify: `python scripts/verify.py` (created round #1; pre-creation baseline = both `.claude-plugin/*.json` parse)
+- push: auto-authorized (2026-09-05, for the first autonomous-run experiment)
 - pointer: #8 (next run resumes here)
 - rounds done: 7
 - status: run complete (pool not converged — T1c open, backlog non-empty)

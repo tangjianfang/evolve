@@ -42,7 +42,7 @@ streak=0
 for ((i = 1; i <= N; i++)); do
   echo "=== auto-evolve round $i/$N ==="
   (cd "$PROJECT" && claude -p "${PERMS[@]}" \
-    "Run the evolve skill for exactly ONE round in autonomous mode. Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round.")
+    "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round.")
 
   # Circuit breaker: 3 consecutive no-progress rounds (checks the tail of the
   # log, where the latest round lines live).
