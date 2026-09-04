@@ -1,0 +1,20 @@
+# evolve log — <project name>
+
+- verify: <verification command(s), from profiling step 1>
+- pointer: #1 (next round)
+- rounds done: 0
+- status: initialized
+- metrics: findings 0 | fixes 0 | regressions 0
+
+## Target pool
+
+- Tier 1 (known defects): <entries from KNOWN_ISSUES / issues / TODO docs, each grep-verified against the code>
+- Tier 2 (coverage gaps): <modules/paths with no or thin tests>
+- Tier 3 (module rotation): <module list from the src/ directory structure>
+- Tier 4 (backlog): <small extensions that fit in one round; big items go spec→plan instead>
+
+## Rounds
+
+<!-- one line per round:
+#<n> | <target> | findings(<n>) | actions(<n>) | result(green|red, <test count>) | diff(<lines>) | <notes>
+-->

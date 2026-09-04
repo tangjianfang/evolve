@@ -1,10 +1,10 @@
 # evolve log — evolve (self-hosting experiment)
 
 - verify: `python scripts/verify.py` (created round #1; pre-creation baseline = both `.claude-plugin/*.json` parse)
-- pointer: #2 (next round)
-- rounds done: 1
+- pointer: #3 (next round)
+- rounds done: 2
 - status: in progress
-- metrics: findings 1 | fixes 1 | regressions 0
+- metrics: findings 2 | fixes 2 | regressions 0
 
 ## Target pool
 
@@ -25,3 +25,4 @@
 ## Rounds
 
 #1 | T1b zero verification | findings(1) | actions(1) | result(green, 28 checks) | diff(~150) | scripts/verify.py — 28 structural checks (JSON, frontmatter, bilingual trigger, version consistency, links); profiling done in same commit; T1b closed
+#2 | T4a no data-file templates | findings(1) | actions(1) | result(green, 31 checks) | diff(~60) | docs/templates/ (evolve-log / lessons / evolve-report) wired into SKILL.md profiling + READMEs; verify baseline 28→31; T4a closed

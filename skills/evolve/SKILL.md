@@ -22,6 +22,8 @@ Treat the current project as a continuously self-improving system. Each round is
 
 ## Project profiling (first run only)
 
+Starter templates for the project data files ship with this skill (`docs/templates/`, next to this SKILL.md in the installation) — copy them when present; the structures described below are authoritative.
+
 Generate the initial `docs/evolve-log.md`:
 
 1. **Verification commands** (round step 5 runs these):
@@ -81,7 +83,7 @@ After N rounds, the last round **must** be the retrospective, producing three th
 
 1. **New lessons** → append to `docs/lessons.md` under the right category, template: `| id | one-sentence lesson | how to apply (an executable action, not a slogan) | source |`; update existing entries on the same topic instead of duplicating; if nothing new, re-check that existing entries still apply.
 2. **Process improvements** → if this run hit a pit already covered by the lesson library, revise the corresponding step in this SKILL.md (source repo: github.com/tangjianfang/evolve — commit the revision there).
-3. **Summary report** → big runs (≥ 20 rounds) update/create `docs/evolve-report.md` including the metrics trend (findings / fixes / regressions over time); small runs append a summary block to evolve-log (outcome numbers, fix list, lesson index).
+3. **Summary report** → big runs (≥ 20 rounds) update/create `docs/evolve-report.md` (template ships with the skill) including the metrics trend (findings / fixes / regressions over time); small runs append a summary block to evolve-log (outcome numbers, fix list, lesson index).
 
 The retrospective itself counts as a round with its own commit — experience capture is not a bonus, it is part of the iteration.
 

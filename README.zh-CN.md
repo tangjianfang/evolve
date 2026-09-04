@@ -38,7 +38,7 @@ evolve 的状态保存在你的项目里：
 - `docs/evolve-log.md` —— 验证命令、轮次指针、每轮一行结构化记录（发现 / 行动 / 结果 / diff）、指标计数器
 - `docs/lessons.md` —— 累积教训库，每条带可执行的"如何应用"
 
-首次在新项目上运行？evolve 会自动做项目画像：探测构建/测试命令（CMake、package.json、pytest、cargo、go、maven、gradle，都没有就问你）、把已知 issue 文档逐条 grep 代码核对、建立目标池。
+首次在新项目上运行？evolve 会自动做项目画像：探测构建/测试命令（CMake、package.json、pytest、cargo、go、maven、gradle，都没有就问你）、把已知 issue 文档逐条 grep 代码核对、建立目标池。三个数据文件的起始模板随 skill 自带（`docs/templates/`）。
 
 ## 安全红线（每轮自检）
 

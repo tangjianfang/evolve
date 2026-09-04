@@ -38,7 +38,7 @@ evolve keeps its state inside your project:
 - `docs/evolve-log.md` — verification commands, round pointer, one structured line per round (findings / actions / result / diff), running metric counters
 - `docs/lessons.md` — accumulated lessons, each with an actionable "how to apply"
 
-First run on a new project? evolve profiles it automatically: detects build/test commands (CMake, package.json, pytest, cargo, go, maven, gradle — or asks you), greps known-issue docs against the code, and builds the target pool.
+First run on a new project? evolve profiles it automatically: detects build/test commands (CMake, package.json, pytest, cargo, go, maven, gradle — or asks you), greps known-issue docs against the code, and builds the target pool. Starter templates for all three data files ship with the skill under `docs/templates/`.
 
 ## Safety rails (checked every round)
 

@@ -95,6 +95,10 @@ for readme in (readme_en, readme_zh):
     for target in re.findall(r"\]\((?!https?://|#)([^)#]+)", readme.read_text(encoding="utf-8")):
         check(f"link resolves: {target} ({readme.name})", (ROOT / target).exists())
 
+for tpl in ("evolve-log.md", "lessons.md", "evolve-report.md"):
+    check(f"template exists: docs/templates/{tpl}",
+          (ROOT / "docs" / "templates" / tpl).exists())
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
