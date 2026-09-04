@@ -59,3 +59,7 @@
 - The one manual action the system asked for: adding PowerShell(...) permission rules (T1f) — 30 seconds of operator time unblocked the remaining 4 rounds
 - Gap found by the run itself: no session knew it was the final round → retrospective skipped → T1g (fixed post-run, E7)
 - Closed: T1d, T1e, T1f, T3d, T4f, T1g(post) · Open: T1c (manual clean-env install test), I2–I4 breaker residuals (recorded in #12), big-ticket backlog (trigger eval set, ≥20-round external long-run, graph-ready tagging per the 2026-09-05 evaluation)
+
+## Operator note (post-#14, root cause of the phantom session and the driver's exit 2)
+
+The #14 session correctly recorded the collision but could not see its root cause: the operator (this session) edited `scripts/auto-evolve.sh` in place while the driver was still executing round 5 — bash re-reads scripts incrementally, so the edit shifted byte offsets, produced the `line 80: unexpected EOF` exit 2, and re-executed the loop body with the new FINAL-round prompt, launching the concurrent "phantom" session. Recorded in E9's how-to-apply: driver edits only between runs.
