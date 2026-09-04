@@ -35,7 +35,10 @@ Long runs are first-class: every 10 rounds evolve writes a checkpoint into the l
 
 evolve keeps its state inside your project:
 
-- `docs/evolve-log.md` — verification commands, round pointer, one structured line per round (findings / actions / result / diff), running metric counters
+- `docs/evolve-log.md` — verification commands, round pointer, one structured line per round (findings / actions / result / diff), running metric counters. Example line:
+  ```
+  #7 | src/ui/Toolbar | findings(2) | actions(2) | result(green, 148 tests) | diff(210) | fixed focus loss + dead shortcut
+  ```
 - `docs/lessons.md` — accumulated lessons, each with an actionable "how to apply"
 
 First run on a new project? evolve profiles it automatically: detects build/test commands (CMake, package.json, pytest, cargo, go, maven, gradle — or asks you), greps known-issue docs against the code, and builds the target pool. Starter templates for all three data files ship with the skill under `docs/templates/`.
@@ -59,6 +62,8 @@ First run on a new project? evolve profiles it automatically: detects build/test
 ```
 
 **Manual:** copy [`skills/evolve/SKILL.md`](skills/evolve/SKILL.md) to `~/.claude/skills/evolve/SKILL.md` (user-level) or `.claude/skills/evolve/SKILL.md` (project-level).
+
+> **Name-collision note:** if the `everything-claude-code` plugin is installed, its own `evolve` skill may win the bare `/evolve` invocation. Prefer the natural-language trigger ("iterate 20 rounds" / "迭代 20 次" — description matching picks this skill) or disable the conflicting plugin.
 
 ## Usage
 

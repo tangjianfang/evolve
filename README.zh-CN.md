@@ -35,7 +35,10 @@ evolve 在任何项目上执行 N 轮小而完整的闭环迭代：
 
 evolve 的状态保存在你的项目里：
 
-- `docs/evolve-log.md` —— 验证命令、轮次指针、每轮一行结构化记录（发现 / 行动 / 结果 / diff）、指标计数器
+- `docs/evolve-log.md` —— 验证命令、轮次指针、每轮一行结构化记录（发现 / 行动 / 结果 / diff）、指标计数器。示例行：
+  ```
+  #7 | src/ui/Toolbar | findings(2) | actions(2) | result(green, 148 tests) | diff(210) | 修复焦点丢失 + 失效快捷键
+  ```
 - `docs/lessons.md` —— 累积教训库，每条带可执行的"如何应用"
 
 首次在新项目上运行？evolve 会自动做项目画像：探测构建/测试命令（CMake、package.json、pytest、cargo、go、maven、gradle，都没有就问你）、把已知 issue 文档逐条 grep 代码核对、建立目标池。三个数据文件的起始模板随 skill 自带（`docs/templates/`）。
@@ -59,6 +62,8 @@ evolve 的状态保存在你的项目里：
 ```
 
 **手动安装：** 把 [`skills/evolve/SKILL.md`](skills/evolve/SKILL.md) 复制到 `~/.claude/skills/evolve/SKILL.md`（用户级）或项目的 `.claude/skills/evolve/SKILL.md`（项目级）。
+
+> **名称冲突提示：** 若同时安装了 `everything-claude-code` 插件，裸名 `/evolve` 可能被它的同名 skill 抢占。建议用自然语言触发（“迭代 20 次”——描述匹配会选中本 skill），或禁用冲突插件。
 
 ## 使用
 
