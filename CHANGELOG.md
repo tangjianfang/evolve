@@ -5,11 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.1] - 2026-09-05
+
+First autonomous run (driver `auto-evolve.sh`, 5 headless sessions on this repo, rounds #8–#12): one honest blocked round + four progressive rounds, verify suite 33 → 71 checks, every fix red-then-green with adversarial-inspector confirmation.
 
 ### Added
 
 - **Behavioral verification harness** (T4f): the driver's stop rules were extracted into `scripts/breaker.sh` (single source of truth, sourced by `auto-evolve.sh`), and `scripts/verify.py` now executes them against twenty-four fixture logs — asserting the stop/continue decision itself instead of substring-probing the driver's source (mutation probes had passed the old checks 2/6; five adversarial-inspection rounds drove the harness to kill every known behavior-changing mutant, behaviorally). Both scripts are also parsed with `bash -n`. Suite: 40 → 71 checks.
+- Driver tells each session its run position and instructs the final round to run the retrospective (T1g — without it the mandatory retrospective silently never happens; proved live by this run, fixed post-run with lessons E6/E7 recorded).
 
 ### Fixed
 

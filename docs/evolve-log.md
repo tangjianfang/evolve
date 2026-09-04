@@ -2,10 +2,10 @@
 
 - verify: `python scripts/verify.py` (created round #1; pre-creation baseline = both `.claude-plugin/*.json` parse)
 - push: auto-authorized (2026-09-05, for the first autonomous-run experiment)
-- pointer: #13 (next run resumes here)
-- rounds done: 12
-- status: active — T4f closed #12; the autonomous-executable pool is now EMPTY (T1c needs a manual clean-env install); next run should be the retrospective (final round of this driver run) or declare converged — driver decision
-- metrics: findings 28 | fixes 30 | regressions 0
+- pointer: #14 (next run resumes here)
+- rounds done: 13
+- status: autonomous-capable pool converged (only manual T1c and big-ticket backlog remain); T1g closed by operator
+- metrics: findings 29 | fixes 33 | regressions 0
 
 ## Target pool
 
@@ -50,3 +50,12 @@
 - Open: T1c install path untested in a clean environment (needs a manual `/plugin marketplace add` test) · Backlog: trigger-match eval set, ≥20-round long-run validation of the v1.1/v1.2 mechanisms
 - Lesson index: E1 name collision, E2 docs-repo verification, E3 autonomous verify command, E4 counter discipline
 
+#13 | retrospective (operator-run — driver predates T1g, sessions couldn't know this was the final round) | findings(1) | actions(3) | result(green+progress, 71 checks) | diff(~90) | T1g found and fixed (driver now passes run position + final-round retrospective instruction, c788c52); lessons E1–E4 verified +1 (confirmed by this run), new E6 (permission-layer blockers) + E7 (driver must pass run position); release 1.3.1
+
+## Autonomous run summary (#8–#12, 2026-09-05, driver auto-evolve.sh, 5 headless sessions)
+
+- Outcome: 1 blocked round (honest refusal to fake progress under a permission wall) + 4 progressive rounds; verify baseline 33 → 71 checks; 4 real parser bugs + 3 driver bugs fixed, all red-then-green; adversarial inspectors confirmed every round and killed 15/15 mutation probes in #12
+- Anti-gaming held under fire: whitelist credentials in every log line; verification lock respected 5/5 rounds; #12 even defended against deliberate result-syntax-mimicking evasion; the one unrunnable round recorded `blocked` instead of narrative progress
+- The one manual action the system asked for: adding PowerShell(...) permission rules (T1f) — 30 seconds of operator time unblocked the remaining 4 rounds
+- Gap found by the run itself: no session knew it was the final round → retrospective skipped → T1g (fixed post-run, E7)
+- Closed: T1d, T1e, T1f, T3d, T4f, T1g(post) · Open: T1c (manual clean-env install test), I2–I4 breaker residuals (recorded in #12), big-ticket backlog (trigger eval set, ≥20-round external long-run, graph-ready tagging per the 2026-09-05 evaluation)
