@@ -1,0 +1,18 @@
+{
+  "name": "evolve-marketplace",
+  "description": "Marketplace for the evolve self-iteration skill",
+  "owner": {
+    "name": "tangjianfang"
+  },
+  "plugins": [
+    {
+      "name": "evolve",
+      "description": "Self-iterating evolution protocol for Claude Code: N rounds of review, fix, verify, commit",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "tangjianfang"
+      }
+    }
+  ]
+}

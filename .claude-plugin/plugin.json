@@ -1,0 +1,19 @@
+{
+  "name": "evolve",
+  "description": "Self-iterating evolution protocol for Claude Code: N rounds of review, fix, verify, commit",
+  "version": "1.0.0",
+  "author": {
+    "name": "tangjianfang"
+  },
+  "homepage": "https://github.com/tangjianfang/evolve",
+  "repository": "https://github.com/tangjianfang/evolve",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "iteration",
+    "code-review",
+    "self-improvement",
+    "workflow",
+    "autonomous-loop"
+  ]
+}
