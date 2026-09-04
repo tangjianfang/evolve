@@ -43,20 +43,19 @@ if [ ! -f "$LOG" ]; then
   exit 1
 fi
 
-streak=0
 for ((i = 1; i <= N; i++)); do
   echo "=== auto-evolve round $i/$N ==="
   (cd "$PROJECT" && claude -p "${PERMS[@]}" \
     "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round.")
 
-  # Circuit breaker: 3 consecutive no-progress rounds (checks the tail of the
-  # log, where the latest round lines live).
-  if tail -n 5 "$LOG" | grep -q "no-progress"; then
-    streak=$((streak + 1))
-  else
-    streak=0
-  fi
-  if [ "$streak" -ge 3 ]; then
+  # Circuit breaker: 3 consecutive no-progress ROUNDS. Round lines look like
+  # '#N | target | ... | result(green+no-progress, ...) | ...' — the log's
+  # file tail can be a run-summary block, so select the round lines, take the
+  # last 3, and stop only when all 3 are no-progress (T1e). Reading the log
+  # (not a counter) also survives driver restarts mid-run.
+  recent=$(grep -E '^#[0-9]+ \|' "$LOG" | tail -n 3 || true)
+  if [ -n "$recent" ] \
+    && [ "$(grep -c 'result(green+no-progress' <<<"$recent")" -eq 3 ]; then
     echo "!! circuit breaker: 3 consecutive no-progress rounds — stopping." >&2
     break
   fi

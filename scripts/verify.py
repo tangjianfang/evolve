@@ -122,6 +122,32 @@ for tpl in ("evolve-log.md", "lessons.md", "evolve-report.md"):
 check("CI workflow exists", (ROOT / ".github" / "workflows" / "verify.yml").exists())
 check("autonomous driver exists", (ROOT / "scripts" / "auto-evolve.sh").exists())
 
+# --- autonomous driver: circuit breaker -------------------------------------
+# The breaker must stop on 3 consecutive no-progress ROUNDS. Round lines look
+# like '#N | target | ... | result(green+no-progress, ...) | ...' — the log's
+# file tail can be a run-summary block instead of round lines, and a single
+# match inside a tail window is not "3 consecutive" (T1e).
+
+driver = (ROOT / "scripts" / "auto-evolve.sh").read_text(encoding="utf-8")
+
+check("circuit breaker selects round lines, not the file tail",
+      bool(re.search(r"grep -E '\^#\[0-9\]\+ \\\|'", driver))
+      and "tail -n 5" not in driver)
+check("circuit breaker fires only when the last 3 round lines are all no-progress",
+      "grep -c 'result(green+no-progress'" in driver and "tail -n 3" in driver
+      and "-eq 3" in driver and "streak" not in driver)
+
+# The round-line pattern must actually work on the real log: it has to select
+# exactly as many lines as the header's 'rounds done' counter claims (also
+# guards the E4 counter-sum discipline).
+evolve_log = ROOT / "docs" / "evolve-log.md"
+log_text = evolve_log.read_text(encoding="utf-8")
+round_lines = re.findall(r"^#\d+ \|", log_text, re.MULTILINE)
+done_m = re.search(r"^- rounds done:\s*(\d+)", log_text, re.MULTILINE)
+check("round lines in evolve-log match header 'rounds done'",
+      bool(done_m) and len(round_lines) == int(done_m.group(1)),
+      f"{len(round_lines)} round lines vs rounds done {done_m.group(1) if done_m else '—'}")
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
