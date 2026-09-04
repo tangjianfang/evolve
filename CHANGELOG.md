@@ -15,7 +15,8 @@ First self-hosted run: the evolve protocol iterating the evolve repo itself (5 r
 - CI workflow (`.github/workflows/verify.yml`) running the suite on push/PR.
 - `docs/templates/` — starter templates for `evolve-log` / `lessons` / `evolve-report`, wired into the profiling and retrospective steps.
 - README name-collision note (`everything-claude-code:evolve` wins the bare name) and structured-record example line, both bilingual.
-- `docs/lessons.md` seeded with 4 lessons (E1–E4); E3/E4 amended back into SKILL.md (autonomous-run verification, counter-sum discipline).
+- `docs/lessons.md` seeded with 5 lessons (E1–E5); E3/E4 amended back into SKILL.md (autonomous-run verification, counter-sum discipline).
+- **Lesson verified-counters + crystallization** (borrowed from `everything-claude-code:evolve` after comparative evaluation): every retrospective re-verifies lessons (`verified +1` / rewrite / delete), and ≥3 same-theme lessons with ≥5 total verifications promote into a named SKILL.md mechanism or standalone skill.
 
 ## [1.1.0] - 2026-09-05
 
