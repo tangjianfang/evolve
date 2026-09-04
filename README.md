@@ -77,6 +77,14 @@ evolve 30 次
 
 Unspecified, it defaults to 5 rounds. You can stop at any point — state lives in `docs/evolve-log.md`, so a later run resumes from the pointer.
 
+**Fully automated:** run N rounds with zero interaction — one round per headless session, circuit-breaked, anti-gaming guarded:
+
+```
+scripts/auto-evolve.sh /path/to/project 50
+```
+
+Prerequisites: one interactive round first (profiling), and either a permissions allow-list in the project's `.claude/settings.local.json` or `--danger` on a trusted project. Every round must earn `green+progress` through the whitelist — new tests, red-then-green fixes, measured improvements, or inspector-confirmed fixes; 3 consecutive no-progress rounds stop the run. Auto-push only when the project's log header declares `push: auto-authorized`.
+
 ## License
 
 [MIT](LICENSE)

@@ -1,10 +1,10 @@
 # evolve log — evolve (self-hosting experiment)
 
 - verify: `python scripts/verify.py` (created round #1; pre-creation baseline = both `.claude-plugin/*.json` parse)
-- pointer: #7 (next run resumes here)
-- rounds done: 6
+- pointer: #8 (next run resumes here)
+- rounds done: 7
 - status: run complete (pool not converged — T1c open, backlog non-empty)
-- metrics: findings 9 | fixes 11 | regressions 0
+- metrics: findings 10 | fixes 15 | regressions 0
 
 ## Target pool
 
@@ -30,6 +30,7 @@
 #4 | T3a/b/c rotation + T1a | findings(4) | actions(2) | result(green, 32 checks) | diff(~20) | findings: README metrics example missing, T1a collision undocumented, CHANGELOG lags rounds 1–3, protocol gap (autonomous profiling) — first two fixed in both READMEs; latter two deferred to #5; T1a mitigated (registry precedence is environmental, documented not closed)
 #5 | retrospective + T3c | findings(1) | actions(4) | result(green, 32 checks) | diff(~90) | lessons.md seeded E1–E4; SKILL.md amended (E3 autonomous verify, E4 counter-sum); release v1.2.0 (CHANGELOG + plugin/marketplace bump); summary block below
 #6 | T4d ECC-benchmark borrow | findings(1) | actions(2) | result(green, 32 checks) | diff(~80) | comparative eval of everything-claude-code:evolve (different species: crystallizer vs engine); adopted its verified-counters + crystallization into retrospective (now 4 outputs); lessons template + own library gained verified column; E5 added; folded into unreleased 1.2.0
+#7 | T4e autonomy + anti-gaming | findings(1) | actions(4) | result(green, 33 checks) | diff(~170) | user directive: full automation, no fake progress — added Autonomous mode (one round per headless session, circuit breaker, conditional auto-push) + Anti-gaming rules (progress whitelist, adversarial inspector, novelty/difficulty guards, verification lock, replay audit) + scripts/auto-evolve.sh driver; release v1.3.0; NOTE: autonomous mode itself not yet validated by a real headless run
 
 ## Run summary (2026-09-05, 5 rounds)
 

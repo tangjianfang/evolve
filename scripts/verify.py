@@ -100,6 +100,7 @@ for tpl in ("evolve-log.md", "lessons.md", "evolve-report.md"):
           (ROOT / "docs" / "templates" / tpl).exists())
 
 check("CI workflow exists", (ROOT / ".github" / "workflows" / "verify.yml").exists())
+check("autonomous driver exists", (ROOT / "scripts" / "auto-evolve.sh").exists())
 
 # --- summary ----------------------------------------------------------------
 

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-05
+
+Full autonomy + anti-gaming: N rounds with zero user interaction, where every round must earn its progress by evidence.
+
+### Added
+
+- **Autonomous mode**: `scripts/auto-evolve.sh <project> <N>` drives headless `claude -p` sessions, one round per session (context always fresh, pointer-based resume); circuit breaker stops after 3 consecutive no-progress rounds; auto-push only when the project's log header declares `push: auto-authorized`; destructive operations forbidden outright (no confirmation available).
+- **Anti-gaming rules**: progress whitelist (baseline-grew / red-then-green / measured-number / inspector-confirmed), adversarial inspector subagent (refute-the-fix, blind to the fix), novelty guard vs the last 10 rounds, difficulty guard (2 trivial rounds → force Tier 1), verification-command lock, and a retrospective **replay audit** that time-travels via git to strike `gamed` rounds.
+- `result` field extended: `green+progress` / `green+no-progress` / `red` / `blocked` / `interrupted`.
+
 ## [1.2.0] - 2026-09-05
 
 First self-hosted run: the evolve protocol iterating the evolve repo itself (5 rounds, per-round commits `evolve #1..#5`).

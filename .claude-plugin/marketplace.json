@@ -8,7 +8,7 @@
     {
       "name": "evolve",
       "description": "Self-iterating evolution protocol for Claude Code: N rounds of review, fix, verify, commit",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "source": "./",
       "author": {
         "name": "tangjianfang"

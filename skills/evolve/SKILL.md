@@ -1,6 +1,6 @@
 ---
 name: evolve
-description: Self-iterating evolution for any project — N rounds, each = visual review (haiku subagent, UI targets only) + code review (main model) → fix bugs / optimize / extend → verify with project commands → commit → record. State lives in docs/evolve-log.md + docs/lessons.md; first run auto-profiles the project. Use when the user says "iterate N times", "/evolve N", "迭代 N 次" or "evolve N 次".
+description: Self-iterating evolution for any project — N rounds, each = visual review (haiku subagent, UI targets only) + code review (main model) → fix bugs / optimize / extend → verify with project commands → commit → record. State lives in docs/evolve-log.md + docs/lessons.md; first run auto-profiles the project. Fully automated runs supported via scripts/auto-evolve.sh (one round per headless session, anti-gaming guards). Use when the user says "iterate N times", "/evolve N", "迭代 N 次" or "evolve N 次".
 ---
 
 # Evolution Protocol (Generic)
@@ -58,7 +58,7 @@ A stale pool wastes rounds on an outdated map. When either trigger fires, do it 
 5. **Verify**: run the commands declared in the evolve-log header; all green or the round doesn't count; re-screenshot UI changes.
 6. **Commit**: follow the project's commit conventions (conventional commits etc.); subject `evolve #<round>: <one sentence>`; body lists findings and fixes. **Do not push** (unless the user explicitly asks).
 7. **Record**: append one structured line to `docs/evolve-log.md`, advance the header pointer to the next round, and update the header metric counters (findings / fixes / regressions) — count from the round's review notes, and keep the header counters equal to the sum of the round lines (E4):
-   `#<round> | <target> | findings(<n>) | actions(<n>) | result(green|red, <test count>) | diff(<lines>) | <notes>`
+   `#<round> | <target> | findings(<n>) | actions(<n>) | result(green+progress|green+no-progress|red|blocked|interrupted, <test count>) | diff(<lines>) | <notes>`
    If an issue or KNOWN_ISSUES entry was fixed, update the corresponding doc in the same commit.
 
 ## Long-run context management
@@ -70,6 +70,33 @@ Long runs (N ≥ 10) degrade as context fills. Rules:
 3. Visual-review subagents return issue lists only (already the rule) — never raw screenshots or long prose.
 4. If a round is interrupted mid-way: finish the current step or discard uncommitted work, log the round as `result(interrupted)`, and resume from the pointer next time.
 
+## Autonomous mode
+
+Fully automated runs: the user launches `scripts/auto-evolve.sh <project> <N>` (a driver looping headless `claude -p` sessions) and walks away. Differences from interactive mode:
+
+1. **One round per session** — each headless session runs exactly one round and exits; the driver owns rounds 1..N, and Step 0's pointer makes every session resume cleanly. Context is always fresh: the compaction problem disappears by construction.
+2. **Auto-push** — if the evolve-log header declares `- push: auto-authorized`, step 6 commits AND pushes. Without that declaration the no-push red line stands.
+3. **No user prompts** — profiling defines verification commands itself and records them as self-defined (E3); destructive operations are outright forbidden in autonomous mode (no confirmation is possible) — if a round would need one, log `result(blocked)` and pick the next target.
+4. **Circuit breaker** — 3 consecutive `no-progress` rounds → stop and report "converged or needs human input". Never manufacture progress to keep the loop alive.
+
+## Anti-gaming rules (objective anchors, every round)
+
+Progress is defined by evidence, never by narrative. A round counts as progress only if it meets the **progress whitelist** — at least one of:
+
+- test baseline grew (+k tests, all green);
+- a fix proven red-then-green (a failing test was written and watched failing before the fix, green after);
+- a measured number improved (benchmark / coverage / latency — before and after values in the log line);
+- a review finding fixed and confirmed by the adversarial inspector.
+
+Rules:
+
+1. **Adversarial inspector**: every bug fix is verified by an independent subagent that receives only the bug description and the tests — never the fix or the fixing session — and is instructed to refute the fix.
+2. **Novelty guard**: before committing, compare the round's target+action against the last 10 log lines; substantively repeating a prior round → discard and pick the next target.
+3. **Difficulty guard**: 2 consecutive trivial rounds (whitelist satisfied only by k < 2 new tests) → the next round must come from Tier 1.
+4. **Verification lock**: the verify command in the log header is read-only after profiling; changing it requires its own commit, flagged in the log.
+5. **Replay audit** (in the retrospective): sample 2 rounds whose progress claim was red-then-green or baseline-grew; check out each round's parent commit and confirm the round's new tests are absent-or-failing there and green on the round's commit. A round that fails replay is struck from the metrics and marked `gamed`.
+6. The record's `result` field takes one of: `green+progress` / `green+no-progress` / `red` / `blocked` / `interrupted`.
+
 ## Convergence & termination
 
 - A target that is clean for 2 consecutive rounds leaves the pool for 10 rounds.
@@ -79,7 +106,7 @@ Long runs (N ≥ 10) degrade as context fills. Rules:
 
 ## Retrospective round (mandatory, final round of every run)
 
-After N rounds, the last round **must** be the retrospective, producing four things:
+After N rounds, the last round **must** be the retrospective. Run the **replay audit** first (Anti-gaming rules #5) — strike any `gamed` rounds from the metrics — then produce four things:
 
 1. **New lessons** → append to `docs/lessons.md` under the right category, template: `| id | lesson | how to apply | source | verified |`. Each retrospective also re-checks existing entries: a lesson this run confirmed in action gets `verified +1`; one that proved wrong or stale gets rewritten or deleted on the spot — the library must not rot.
 2. **Process improvements** → if this run hit a pit already covered by the lesson library, revise the corresponding step in this SKILL.md (source repo: github.com/tangjianfang/evolve — commit the revision there).
@@ -97,3 +124,4 @@ The retrospective itself counts as a round with its own commit — experience ca
 - Keep each round's diff within ~300 lines (or the cap declared in project lessons) — every round stays revertible.
 - Fixing an issue entry must update the corresponding doc in the same commit.
 - Never delete or modify user data; destructive commands always require confirmation.
+- Anti-gaming rules apply every round: progress only via the whitelist; never pad metrics, never repeat a prior round's work, never loosen the verify command. In autonomous mode destructive operations are forbidden outright.

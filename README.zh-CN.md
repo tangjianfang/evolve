@@ -77,6 +77,14 @@ evolve 30 次
 
 未指定轮数时默认 5 轮。随时可停 —— 状态存在 `docs/evolve-log.md`，下次运行从指针处继续。
 
+**全自动模式：**零交互跑 N 轮——每轮一个 headless 会话，带熔断与反欺骗防线：
+
+```
+scripts/auto-evolve.sh /path/to/project 50
+```
+
+前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步自动熔断。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。
+
 ## 许可证
 
 [MIT](LICENSE)
