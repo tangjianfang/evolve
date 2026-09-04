@@ -1,6 +1,9 @@
 # evolve log — <project name>
 
 - verify: <verification command(s), from profiling step 1>
+<!-- optional — declare only to authorize auto-push in autonomous runs:
+- push: auto-authorized
+-->
 - pointer: #1 (next round)
 - rounds done: 0
 - status: initialized
@@ -15,6 +18,6 @@
 
 ## Rounds
 
-<!-- one line per round:
-#<n> | <target> | findings(<n>) | actions(<n>) | result(green|red, <test count>) | diff(<lines>) | <notes>
+<!-- one line per round (result vocabulary per the anti-gaming rules):
+#<n> | <target> | findings(<n>) | actions(<n>) | result(green+progress|green+no-progress|red|blocked|interrupted, <test count>) | diff(<lines>) | <notes>
 -->

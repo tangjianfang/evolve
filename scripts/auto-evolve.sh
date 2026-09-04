@@ -18,8 +18,9 @@
 #   even when both halves are allow-listed — invoke verify as one command.
 # - Auto-push happens only if the project's evolve-log header declares
 #   `push: auto-authorized`; otherwise rounds commit without pushing.
-# - Stops early on: 3 consecutive no-progress rounds (circuit breaker) or
-#   `status: converged` in the log header.
+# - Stops early on: 3 consecutive no-progress rounds (circuit breaker),
+#   3 consecutive failed `claude -p` sessions, or `status: converged` in
+#   the log header.
 
 set -euo pipefail
 
@@ -29,7 +30,16 @@ if [ $# -lt 1 ]; then
 fi
 
 PROJECT=$(realpath "$1")
-N=${2:-5}
+# `${2-5}` (not `${2:-5}`): an explicitly empty <rounds> is a caller error,
+# not a request for the default — let the validation below reject it.
+N=${2-5}
+# Validate before use: bash arithmetic evaluates a non-numeric identifier
+# like '--danger' to 0, so a swapped argument list would otherwise run the
+# loop zero times — silently — with danger mode on.
+if ! [[ "$N" =~ ^[1-9][0-9]*$ ]]; then
+  echo "usage: $0 <project-path> <rounds: positive integer> [--danger]" >&2
+  exit 1
+fi
 shift 2 || true
 
 PERMS=(--permission-mode acceptEdits)
@@ -43,10 +53,26 @@ if [ ! -f "$LOG" ]; then
   exit 1
 fi
 
+consecutive_failures=0
 for ((i = 1; i <= N; i++)); do
   echo "=== auto-evolve round $i/$N ==="
-  (cd "$PROJECT" && claude -p "${PERMS[@]}" \
-    "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round.")
+  # Guarded, not bare: under `set -e` a non-zero claude exit (rate limit,
+  # crashed session) would kill the driver before the breakers below ever
+  # run. Instead report it, still let the breakers read the log (the round
+  # may have appended its line before dying), and abort only on 3
+  # consecutive failed sessions — mirroring the no-progress breaker.
+  if (cd "$PROJECT" && claude -p "${PERMS[@]}" \
+    "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round."); then
+    consecutive_failures=0
+  else
+    rc=$?
+    consecutive_failures=$((consecutive_failures + 1))
+    echo "!! round $i session exited $rc ($consecutive_failures/3 consecutive failures)" >&2
+    if [ "$consecutive_failures" -ge 3 ]; then
+      echo "!! 3 consecutive failed sessions — stopping." >&2
+      break
+    fi
+  fi
 
   # Circuit breaker: 3 consecutive no-progress ROUNDS. Round lines look like
   # '#N | target | ... | result(green+no-progress, ...) | ...' — the log's

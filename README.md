@@ -83,7 +83,7 @@ Unspecified, it defaults to 5 rounds. You can stop at any point — state lives 
 scripts/auto-evolve.sh /path/to/project 50
 ```
 
-Prerequisites: one interactive round first (profiling), and either a permissions allow-list in the project's `.claude/settings.local.json` or `--danger` on a trusted project. Allow-list rule prefixes must match the session's shell tool — `Bash(...)` rules do not cover a PowerShell session (Windows default), so add parallel `PowerShell(...)` rules for the verify command and git, and invoke verify as a single command (chained `a && b` fails static validation). Every round must earn `green+progress` through the whitelist — new tests, red-then-green fixes, measured improvements, or inspector-confirmed fixes; 3 consecutive no-progress rounds stop the run. Auto-push only when the project's log header declares `push: auto-authorized`.
+Prerequisites: one interactive round first (profiling), and either a permissions allow-list in the project's `.claude/settings.local.json` or `--danger` on a trusted project. Allow-list rule prefixes must match the session's shell tool — `Bash(...)` rules do not cover a PowerShell session (Windows default), so add parallel `PowerShell(...)` rules for the verify command and git, and invoke verify as a single command (chained `a && b` fails static validation). Every round must earn `green+progress` through the whitelist — new tests, red-then-green fixes, measured improvements, or inspector-confirmed fixes; 3 consecutive no-progress rounds — or 3 consecutive failed sessions — stop the run. Auto-push only when the project's log header declares `push: auto-authorized`.
 
 ## License
 

@@ -119,6 +119,15 @@ for tpl in ("evolve-log.md", "lessons.md", "evolve-report.md"):
     check(f"template exists: docs/templates/{tpl}",
           (ROOT / "docs" / "templates" / tpl).exists())
 
+# The evolve-log template must teach the CURRENT result vocabulary — a
+# template still showing the legacy 'result(green|red, ...)' form breeds
+# logs the anti-gaming rules (and the circuit breaker) cannot read.
+tpl_log = (ROOT / "docs" / "templates" / "evolve-log.md").read_text(encoding="utf-8")
+check("evolve-log template shows the anti-gaming result vocabulary",
+      "green+progress" in tpl_log and "green+no-progress" in tpl_log
+      and "blocked" in tpl_log and "interrupted" in tpl_log
+      and "result(green|" not in tpl_log)
+
 check("CI workflow exists", (ROOT / ".github" / "workflows" / "verify.yml").exists())
 check("autonomous driver exists", (ROOT / "scripts" / "auto-evolve.sh").exists())
 
@@ -132,10 +141,29 @@ driver = (ROOT / "scripts" / "auto-evolve.sh").read_text(encoding="utf-8")
 
 check("circuit breaker selects round lines, not the file tail",
       bool(re.search(r"grep -E '\^#\[0-9\]\+ \\\|'", driver))
+      and '"$LOG" | tail -n 3' in driver
       and "tail -n 5" not in driver)
 check("circuit breaker fires only when the last 3 round lines are all no-progress",
       "grep -c 'result(green+no-progress'" in driver and "tail -n 3" in driver
       and "-eq 3" in driver and "streak" not in driver)
+
+# The driver runs under `set -euo pipefail`: an unguarded `claude -p`
+# non-zero exit (rate limit, crashed session) kills the driver before the
+# breaker can run. The invocation must sit in an errexit-safe guard, and
+# persistently failing sessions must abort the run instead of silently
+# burning the remaining rounds.
+check("driver survives a failed round session instead of dying under set -e",
+      bool(re.search(r'if \(cd "\$PROJECT" && claude -p', driver))
+      and driver.count("failures=0") >= 2 and "-ge 3" in driver)
+
+# A non-numeric or zero <rounds> must fail loudly at startup: bash
+# arithmetic evaluates an identifier like '--danger' to 0, so a swapped
+# argument list would silently run zero rounds. The guard must be negated
+# (reject-inverted mutants pass a plain 'if [[ ... ]]') and an explicitly
+# empty <rounds> must reach it, not fall through to the default.
+check("driver validates <rounds> as a positive integer",
+      'if ! [[ "$N" =~ ' in driver and "[1-9][0-9]*$" in driver
+      and "N=${2-5}" in driver)
 
 # The round-line pattern must actually work on the real log: it has to select
 # exactly as many lines as the header's 'rounds done' counter claims (also

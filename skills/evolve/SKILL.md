@@ -39,7 +39,7 @@ Generate the initial `docs/evolve-log.md`:
    - Tier 2, test coverage gaps;
    - Tier 3, module rotation review: list modules from the `src/` directory structure;
    - Tier 4, backlog of small extensions (big items go through their own spec→plan flow, not into rounds).
-3. Header block: `- verify: <command>`, `- pointer: #1 (next round)`, `- rounds done: 0`, `- status: initialized`, plus running counters `- metrics: findings 0 | fixes 0 | regressions 0`.
+3. Header block: `- verify: <command>`, `- pointer: #1 (next round)`, `- rounds done: 0`, `- status: initialized`, plus running counters `- metrics: findings 0 | fixes 0 | regressions 0`. Autonomous runs may also declare `- push: auto-authorized` (see Autonomous mode) — add it only when the user has explicitly authorized auto-push.
 
 ## Pool refresh (every 10 rounds, or after one full sweep of the pool)
 
