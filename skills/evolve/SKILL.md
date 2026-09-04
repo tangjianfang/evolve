@@ -33,7 +33,7 @@ Generate the initial `docs/evolve-log.md`:
    - `Cargo.toml` → `cargo test`;
    - `go.mod` → `go test ./...`;
    - `pom.xml` / `build.gradle(.kts)` → the project's test task (`mvn test` / `gradle test`);
-   - none of the above → ask the user "what command verifies a change?" and record it verbatim.
+   - none of the above → ask the user "what command verifies a change?" and record it verbatim. In an autonomous run (the user delegated the whole iteration), define a structural check yourself (JSON / frontmatter / version consistency / link resolution as applicable), establish the baseline, record it as self-defined, and flag it for user review in the retrospective (E3).
 2. **Target pool** (four priority tiers):
    - Tier 1, known defects: read the project's KNOWN_ISSUES/issues/TODO docs; grep the code for each entry to confirm it is actually unfixed (D7: docs lag behind code);
    - Tier 2, test coverage gaps;
@@ -57,7 +57,7 @@ A stale pool wastes rounds on an outdated map. When either trigger fires, do it 
 4. **Act** (1–3 items this round, by priority): fix bugs (confirmed review findings first) → optimize existing features → pick a backlog extension that fits in one round.
 5. **Verify**: run the commands declared in the evolve-log header; all green or the round doesn't count; re-screenshot UI changes.
 6. **Commit**: follow the project's commit conventions (conventional commits etc.); subject `evolve #<round>: <one sentence>`; body lists findings and fixes. **Do not push** (unless the user explicitly asks).
-7. **Record**: append one structured line to `docs/evolve-log.md`, advance the header pointer to the next round, and update the header metric counters (findings / fixes / regressions):
+7. **Record**: append one structured line to `docs/evolve-log.md`, advance the header pointer to the next round, and update the header metric counters (findings / fixes / regressions) — count from the round's review notes, and keep the header counters equal to the sum of the round lines (E4):
    `#<round> | <target> | findings(<n>) | actions(<n>) | result(green|red, <test count>) | diff(<lines>) | <notes>`
    If an issue or KNOWN_ISSUES entry was fixed, update the corresponding doc in the same commit.
 
