@@ -19,24 +19,26 @@ Each round is a strict seven-step loop, driven by two collaborating roles:
 | Visual Reviewer | haiku subagent (UI targets only) | Screenshot analysis: broken layout, overflow, contrast, scaling issues |
 | Logic Engineer | the main model (your session) | Code review, bug fixes, new features, verification, commits |
 
-1. **Pick a target** from a 4-tier priority pool (known issues → test gaps → module rotation → backlog)
+1. **Pick a target** from a 4-tier priority pool (known issues → test gaps → module rotation → backlog); the pool is re-scanned every 10 rounds so it never iterates against a stale map
 2. **Visual review** — delegated to a haiku subagent; findings are cross-checked before acting (≈15% hallucinated findings in practice)
-3. **Code review** — project conventions + common checks (error handling, concurrency, leaks, dead code, hardcoding, performance)
+3. **Code review** — project conventions + common checks (error handling, concurrency, leaks, dead code, hardcoding, performance); review scope is cost-guarded by module size
 4. **Act** — 1–3 items per round, by priority: fix → optimize → small extension
 5. **Verify** — run the project's own build/test commands; all green or the round doesn't count
 6. **Commit** — one commit per round (`evolve #<round>: <summary>`); never auto-pushes
-7. **Record** — append the round to `docs/evolve-log.md` and advance the pointer
+7. **Record** — append a structured line (`findings / actions / result / diff`) to `docs/evolve-log.md`, advance the pointer, update the metric counters
 
-The loop **converges**: targets that stay clean for 2 rounds are retired; 3 clean full-pool rounds trigger early termination. The final round is always a **retrospective** that feeds lessons back into `docs/lessons.md` — and, when the process itself was the problem, back into this skill.
+The loop **converges**: targets that stay clean for 2 rounds are retired; 3 full-pool-clean rounds with **zero findings and zero regressions** trigger early termination — backed by data, not impression. The final round is always a **retrospective** that feeds lessons back into `docs/lessons.md` — and, when the process itself was the problem, back into this skill.
+
+Long runs are first-class: every 10 rounds evolve writes a checkpoint into the log and hands off to a fresh session, resuming from the pointer — context pressure never degrades round quality.
 
 ## Project data files
 
 evolve keeps its state inside your project:
 
-- `docs/evolve-log.md` — verification commands, round pointer, one line per round
+- `docs/evolve-log.md` — verification commands, round pointer, one structured line per round (findings / actions / result / diff), running metric counters
 - `docs/lessons.md` — accumulated lessons, each with an actionable "how to apply"
 
-First run on a new project? evolve profiles it automatically: detects build/test commands, greps known-issue docs against the code, and builds the target pool.
+First run on a new project? evolve profiles it automatically: detects build/test commands (CMake, package.json, pytest, cargo, go, maven, gradle — or asks you), greps known-issue docs against the code, and builds the target pool.
 
 ## Safety rails (checked every round)
 

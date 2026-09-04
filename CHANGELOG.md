@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-05
+
+### Added
+
+- **Long-run context management**: structured outcomes only in conversation, checkpoint + fresh-session handoff every 10 rounds, interrupted-round recovery via `result(interrupted)`.
+
+- **Pool refresh** every 10 rounds (or one full pool sweep): re-verify Tier 1 against code, re-list Tier 3 modules — no more iterating against a stale map.
+- **Structured per-round record**: `#<round> | target | findings(n) | actions(n) | result(green|red, tests) | diff(lines)` plus running metric counters in the log header; "converged" now requires 0 findings and 0 regressions, not impression.
+- **Cost-guarded code review scope**: small modules (≤ ~2000 lines) read in full; large modules expand outward from target files only as findings demand.
+- **Broader verification detection**: pytest / cargo test / go test / maven / gradle in addition to CMake, sln, and package.json.
+- SKILL.md body rewritten in English (canonical) with a bilingual description so both "iterate N times" and "迭代 N 次" trigger it.
+
 ## [1.0.0] - 2026-09-04
 
 ### Added

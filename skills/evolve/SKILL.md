@@ -1,72 +1,95 @@
 ---
 name: evolve
-description: 任意项目的自动进化迭代——N 轮循环,每轮 = 视觉 review(haiku 子代理,仅 UI 类目标)+ 代码 review(主模型)→ 修 bug / 优化 / 扩展 → 按项目验证命令验证 → 提交 → 记录。项目数据(docs/evolve-log.md + docs/lessons.md)驱动,首次运行自动做项目画像初始化。用户说"迭代 N 次"或 "/evolve N"时使用。
+description: Self-iterating evolution for any project — N rounds, each = visual review (haiku subagent, UI targets only) + code review (main model) → fix bugs / optimize / extend → verify with project commands → commit → record. State lives in docs/evolve-log.md + docs/lessons.md; first run auto-profiles the project. Use when the user says "iterate N times", "/evolve N", "迭代 N 次" or "evolve N 次".
 ---
 
-# 自动进化协议(通用)
+# Evolution Protocol (Generic)
 
-把当前项目当成持续自我完善的系统。每轮迭代是一次小而完整的"发现问题 → 解决 → 验证 → 记录"闭环,由两个角色协作:
+Treat the current project as a continuously self-improving system. Each round is one small, complete loop: **find a problem → solve it → verify → commit → record**. Two roles collaborate:
 
-- **视觉评审员(haiku)**:截图分析,找布局错乱、溢出、对比度、缩放异常等问题 —— 通过 `Agent` 工具以 `model: haiku` 委派,给它 Read/Bash 权限(R2),只回传问题清单。仅当目标是 UI 且项目有截图手段时执行;否则跳过本步,代码 review 加重。
-- **逻辑工程师(主模型)**:代码 review、修 bug、写新功能、验证、提交 —— 由当前会话执行,绝不下放给子代理改代码。
+- **Visual Reviewer (haiku)**: screenshot analysis — broken layout, overflow, contrast, scaling anomalies. Delegated via the `Agent` tool with `model: haiku` and Read/Bash permissions (R2); returns an issue list only. Runs only when the target is UI and the project has a screenshot mechanism; otherwise skip this step and weight code review heavier.
+- **Logic Engineer (main model)**: code review, bug fixes, new features, verification, commits — executed by the current session, never delegated to subagents.
 
-## 输入
+## Input
 
-- 迭代轮数 N(用户说"迭代 50 次"即 N=50)。未指定时默认 5。
+- Round count N (user says "iterate 50 times" → N=50). Default 5 when unspecified.
 
-## 第 0 步(强制):读项目数据
+## Step 0 (mandatory): read project data
 
-1. 读项目的 `CLAUDE.md`/`AGENTS.md`(若有)—— 项目边界、惯例、验证方式是协议的一部分。
-2. 读 `docs/lessons.md`(若不存在,视为空教训库,复盘轮会补建)。
-3. 读 `docs/evolve-log.md`。**若不存在 → 先做项目画像初始化**(见下节),再继续。
+1. Read the project's `CLAUDE.md`/`AGENTS.md` (if present) — project boundaries, conventions, and verification methods are part of this protocol.
+2. Read `docs/lessons.md` (missing = empty lesson library; the retrospective round will create it).
+3. Read `docs/evolve-log.md`. **If missing → run project profiling first** (below), then continue.
 
-## 项目画像初始化(仅首次)
+## Project profiling (first run only)
 
-生成 `docs/evolve-log.md` 初值:
+Generate the initial `docs/evolve-log.md`:
 
-1. **验证命令**(每轮第 5 步按此执行):
-   - 有 `build.bat`/`CMakeLists.txt`/`*.sln` → 构建命令 + 测试 runner(ctest / 独立测试 exe),记录基线用例数(先跑一次);
-   - 有 `package.json` → 语法检查(node --check / new Function)+ 测试脚本;web 项目另记部署节奏(每 5 轮部署一次,最后一轮必部署);
-   - 都没有 → 询问用户"改动后用什么命令验证?",如实记录。
-2. **目标池**(优先级四层):
-   - Tier 1 已知缺陷:读项目的 KNOWN_ISSUES/issues/TODO 文档;逐条 grep 代码核对真的未修复(D7:文档可能滞后于代码);
-   - Tier 2 测试覆盖缺口;
-   - Tier 3 区域轮转 review:按 src/ 目录结构列模块清单;
-   - Tier 4 Backlog 小扩展(大件走各自 spec→plan 流程,不进轮)。
-3. 头部声明:`- 验证: <命令>`、`- 指针: #1(下一轮)`、`- 已完成轮次: 0`、`- 状态: 初始化完成`。
+1. **Verification commands** (round step 5 runs these):
+   - `CMakeLists.txt` / `*.sln` / `build.bat` → build command + test runner (ctest / standalone test exe); record the baseline test count (run it once first);
+   - `package.json` → syntax check (`node --check`) + test script; for web projects also record the deploy cadence (deploy every 5 rounds; the final round must deploy);
+   - `pyproject.toml` / `setup.py` / `requirements.txt` / `*.py` → `python -m pytest` (fall back to `python -m unittest`);
+   - `Cargo.toml` → `cargo test`;
+   - `go.mod` → `go test ./...`;
+   - `pom.xml` / `build.gradle(.kts)` → the project's test task (`mvn test` / `gradle test`);
+   - none of the above → ask the user "what command verifies a change?" and record it verbatim.
+2. **Target pool** (four priority tiers):
+   - Tier 1, known defects: read the project's KNOWN_ISSUES/issues/TODO docs; grep the code for each entry to confirm it is actually unfixed (D7: docs lag behind code);
+   - Tier 2, test coverage gaps;
+   - Tier 3, module rotation review: list modules from the `src/` directory structure;
+   - Tier 4, backlog of small extensions (big items go through their own spec→plan flow, not into rounds).
+3. Header block: `- verify: <command>`, `- pointer: #1 (next round)`, `- rounds done: 0`, `- status: initialized`, plus running counters `- metrics: findings 0 | fixes 0 | regressions 0`.
 
-## 每轮流程(严格顺序)
+## Pool refresh (every 10 rounds, or after one full sweep of the pool)
 
-1. **选目标**:从目标池按优先级取下一个 Tier 1→4(指针存于 `docs/evolve-log.md` 头部)。
-2. **视觉 review**(仅 UI 类目标且项目有截图手段):委派 haiku 子代理,prompt 模板:"这是 <项目名> 的 <区域> 截图,请列出视觉/交互问题:布局错乱、溢出、遮挡、对比度不足、缩放异常、空隙异常、文案缺失,按严重度排序;没有问题就回答'干净'。"评审发现必须复核再动手(R1:幻报 ~15%,核对源码/重截/重跑测试交叉验证)。
-3. **代码 review**:读目标对应源码与测试,重点 = 项目 CLAUDE.md 的惯例清单 + 通用项(错误处理、并发/锁边界、资源泄漏、死代码、硬编码、性能)。
-4. **行动(本轮 1–3 项,按优先级)**:修 bug(评审确认的问题优先)→ 优化现有功能 → 从 Backlog 挑一轮内可完成的小扩展。
-5. **验证**:按 evolve-log 头部声明的验证命令执行,全绿才算完成;涉及 UI 的改动重新截图确认。
-6. **提交**:遵循项目的 commit 惯例(conventional commits 等),正文首行 `evolve #<轮次>: <一句话>`,正文列发现与修复。**不 push**(用户明确要求除外)。
-7. **记录**:向 `docs/evolve-log.md` 追加一行 `#<轮次> | 目标 | 发现 | 行动 | 结果`,并把头部指针拨到下一轮;修了 issue/KNOWN_ISSUES 条目的,同一 commit 同步更新对应文档。
+A stale pool wastes rounds on an outdated map. When either trigger fires, do it as part of that round's work (no separate commit):
 
-## 收敛与终止
+1. Re-verify Tier 1 entries against the code — drop the ones already fixed (D7).
+2. Re-list Tier 3 from the current `src/` structure — drop deleted modules, add new ones.
+3. Mention the refresh in that round's log line (action `pool-refresh`).
 
-- 连续 2 轮某目标"干净" → 该目标移出池子 10 轮。
-- 连续 3 轮全池"干净"且 Backlog 空 → 提前终止,报告"项目已收敛"。
-- 每轮独立 commit,随时可停;续跑时从 log 头部指针继续。
-- 用户新指令优先切道,做完切回。
+## Per-round loop (strict order)
 
-## 复盘轮(强制,每程最后一轮)
+1. **Pick a target**: next item from the pool by tier priority 1→4 (pointer lives in the `docs/evolve-log.md` header).
+2. **Visual review** (UI targets with screenshot capability only): delegate the haiku subagent, prompt template: "This is a screenshot of <area> of <project>. List visual/interaction problems: broken layout, overflow, occlusion, insufficient contrast, scaling anomalies, abnormal spacing, missing copy — ordered by severity. If there are none, answer 'clean'." Every finding must be re-verified before acting (R1: ~15% hallucinated findings — cross-check the source, re-screenshot, or re-run tests).
+3. **Code review** — scope by module size (cost guard): small module (≤ ~2000 lines) → read the target sources and tests in full; large module → read the files named by the target and their tests first, expand outward only when findings demand it. Focus = the project CLAUDE.md convention checklist + generic checks (error handling, concurrency/lock boundaries, resource leaks, dead code, hardcoding, performance).
+4. **Act** (1–3 items this round, by priority): fix bugs (confirmed review findings first) → optimize existing features → pick a backlog extension that fits in one round.
+5. **Verify**: run the commands declared in the evolve-log header; all green or the round doesn't count; re-screenshot UI changes.
+6. **Commit**: follow the project's commit conventions (conventional commits etc.); subject `evolve #<round>: <one sentence>`; body lists findings and fixes. **Do not push** (unless the user explicitly asks).
+7. **Record**: append one structured line to `docs/evolve-log.md`, advance the header pointer to the next round, and update the header metric counters (findings / fixes / regressions):
+   `#<round> | <target> | findings(<n>) | actions(<n>) | result(green|red, <test count>) | diff(<lines>) | <notes>`
+   If an issue or KNOWN_ISSUES entry was fixed, update the corresponding doc in the same commit.
 
-N 轮迭代完成后,最后一轮**必须**是复盘轮,产出三件事:
+## Long-run context management
 
-1. **本程新教训** → 追加 `docs/lessons.md` 对应分类,模板:`| 编号 | 一句话教训 | 如何应用(可执行动作,非口号) | 来源 |`;同主题已有条目**更新原条目**而非重复;无新教训时复核既有条目适用性。
-2. **流程改进** → 若本程踩了"教训库里已有"的坑,修订本 SKILL.md 对应步骤(本 skill 源码仓库: github.com/tangjianfang/evolve,修订后在该仓库 commit)。
-3. **总结报告** → 大程(≥20 轮)更新/新建 `docs/evolve-report.md`;小程在 evolve-log 追加总结段(成果数字、修复清单、教训索引)。
+Long runs (N ≥ 10) degrade as context fills. Rules:
 
-复盘轮自身也计为一轮、独立 commit —— 经验沉淀不是附赠品,是迭代的一部分。
+1. Keep only structured outcomes in the conversation — the log line and the commit summary. Never re-paste long diffs or full file contents into chat.
+2. Every 10 rounds (or as soon as compaction feels imminent): write a checkpoint into the evolve-log header — current pointer, pool snapshot, in-flight work — then suggest the user start a fresh session; the next session resumes from the pointer via Step 0.
+3. Visual-review subagents return issue lists only (already the rule) — never raw screenshots or long prose.
+4. If a round is interrupted mid-way: finish the current step or discard uncommitted work, log the round as `result(interrupted)`, and resume from the pointer next time.
 
-## 红线(每轮自检)
+## Convergence & termination
 
-- 遵循项目 CLAUDE.md/AGENTS.md 声明的产品边界与"不要做"清单(没有就先问用户确认边界)。
-- 不自动 push;不动 vendored 依赖目录;不引入新第三方依赖。
-- 测试全绿才 commit(基线只增不减)。
-- 每轮 diff 控制在 ~300 行内(或项目教训声明的上限),保持可回滚。
-- 修复 issue 条目必须同步更新对应文档。
-- 不删改用户数据;破坏性命令一律要求确认。
+- A target that is clean for 2 consecutive rounds leaves the pool for 10 rounds.
+- 3 consecutive all-clean pool rounds with an empty backlog → terminate early and report "project converged". "Clean" must be backed by data — 0 findings and 0 regressions in those rounds — not by impression.
+- Every round is an independent commit; stop anytime; a resuming run continues from the log header pointer.
+- New user instructions take priority; finish them, then return to the loop.
+
+## Retrospective round (mandatory, final round of every run)
+
+After N rounds, the last round **must** be the retrospective, producing three things:
+
+1. **New lessons** → append to `docs/lessons.md` under the right category, template: `| id | one-sentence lesson | how to apply (an executable action, not a slogan) | source |`; update existing entries on the same topic instead of duplicating; if nothing new, re-check that existing entries still apply.
+2. **Process improvements** → if this run hit a pit already covered by the lesson library, revise the corresponding step in this SKILL.md (source repo: github.com/tangjianfang/evolve — commit the revision there).
+3. **Summary report** → big runs (≥ 20 rounds) update/create `docs/evolve-report.md` including the metrics trend (findings / fixes / regressions over time); small runs append a summary block to evolve-log (outcome numbers, fix list, lesson index).
+
+The retrospective itself counts as a round with its own commit — experience capture is not a bonus, it is part of the iteration.
+
+## Red lines (self-check every round)
+
+- Respect the product boundaries and "don't do" lists declared in the project's CLAUDE.md/AGENTS.md (if absent, confirm boundaries with the user first).
+- No auto-push; no touching vendored dependency directories; no new third-party dependencies.
+- Tests must be all green before commit (baseline count only grows).
+- Keep each round's diff within ~300 lines (or the cap declared in project lessons) — every round stays revertible.
+- Fixing an issue entry must update the corresponding doc in the same commit.
+- Never delete or modify user data; destructive commands always require confirmation.
