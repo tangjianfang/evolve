@@ -2,10 +2,10 @@
 
 - verify: `python scripts/verify.py` (created round #1; pre-creation baseline = both `.claude-plugin/*.json` parse)
 - push: auto-authorized (2026-09-05, for the first autonomous-run experiment)
-- pointer: #9 (next run resumes here)
-- rounds done: 8
-- status: blocked — round #8 could not execute the verify command (session permission system denies `python`; subagents inherit this — see T1f); fixes pre-staged as pool entries for #9
-- metrics: findings 13 | fixes 16 | regressions 0
+- pointer: #10 (next run resumes here)
+- rounds done: 9
+- status: active — verify gate open (T1f fixed: `PowerShell(...)` allow-list rules live); next Tier 1: T1e
+- metrics: findings 14 | fixes 18 | regressions 0
 
 ## Target pool
 
@@ -13,9 +13,9 @@
   - T1a skill name collision: bare `evolve` resolves to `everything-claude-code:evolve` when that plugin is installed — reproduced live 2026-09-05
   - T1b zero automated verification (JSON / frontmatter / version consistency) — the "no eval" score deduction
   - T1c install path never exercised: `/plugin marketplace add tangjianfang/evolve` untested in a clean environment
-  - T1d (refresh #8) SKILL.md retrospective output list has a duplicated item — numbering runs 1,2,3,4,3 with "**Summary report**" twice (lines ~114-115); introduced by #6's crystallization edit. Fix: drop the duplicate; add a verify.py ordered-list-numbering check (write it, watch it FAIL, fix, watch it pass — red-then-green)
+  - T1d (refresh #8) SKILL.md retrospective output list has a duplicated item — numbering runs 1,2,3,4,3 with "**Summary report**" twice (lines ~114-115); introduced by #6's crystallization edit. Fix: drop the duplicate; add a verify.py ordered-list-numbering check (write it, watch it FAIL, fix, watch it pass — red-then-green) — closed #9
   - T1e (refresh #8) auto-evolve.sh circuit breaker reads `tail -n 5` of the whole log file, but round lines are not the file tail (the Run-summary block follows the Rounds block in this repo's log), and any single no-progress match inside the window increments the streak — so "3 consecutive no-progress rounds" is not what it measures. Fix: select round lines (`^#[0-9]+ \|`) and require the last 3 to all be no-progress
-  - T1f (refresh #8) autonomous sessions cannot execute the verify command when the project allow-list uses `Bash(...)` prefixes but the session's shell tool is PowerShell — `.claude/settings.local.json` allows `Bash(python:*)` yet `python` is denied, and spawned subagents have no Bash tool either. Fix: add `PowerShell(...)` rules to the allow-list (needs one manual approval — settings writes are protected) and document the requirement in auto-evolve.sh's header + README autonomous section
+  - T1f (refresh #8) autonomous sessions cannot execute the verify command when the project allow-list uses `Bash(...)` prefixes but the session's shell tool is PowerShell — `.claude/settings.local.json` allows `Bash(python:*)` yet `python` is denied, and spawned subagents have no Bash tool either. Fix: add `PowerShell(...)` rules to the allow-list (needs one manual approval — settings writes are protected) and document the requirement in auto-evolve.sh's header + README autonomous section — closed #9 (rules live in local untracked settings; requirement documented in all three)
 - Tier 2 (coverage gaps): zero checks — merged into T1b
 - Tier 3 (module rotation):
   - T3a SKILL.md internal consistency after the English rewrite
@@ -37,6 +37,7 @@
 #6 | T4d ECC-benchmark borrow | findings(1) | actions(2) | result(green, 32 checks) | diff(~80) | comparative eval of everything-claude-code:evolve (different species: crystallizer vs engine); adopted its verified-counters + crystallization into retrospective (now 4 outputs); lessons template + own library gained verified column; E5 added; folded into unreleased 1.2.0
 #7 | T4e autonomy + anti-gaming | findings(1) | actions(4) | result(green, 33 checks) | diff(~170) | user directive: full automation, no fake progress — added Autonomous mode (one round per headless session, circuit breaker, conditional auto-push) + Anti-gaming rules (progress whitelist, adversarial inspector, novelty/difficulty guards, verification lock, replay audit) + scripts/auto-evolve.sh driver; release v1.3.0; NOTE: autonomous mode itself not yet validated by a real headless run
 #8 | pool-refresh + T3 rotation (SKILL.md, auto-evolve.sh, verify.py) | findings(3) | actions(1) | result(blocked, 33 checks NOT executable — permission denial) | diff(~45) | first real autonomous/headless round (validates #7's mechanism end-to-end incl. resume-from-pointer); pool refresh triggered (full sweep done): T1d SKILL.md retrospective duplicate list item, T1e auto-evolve.sh circuit-breaker tail-window bug, T1f allow-list tool-prefix gap (`Bash(python:*)` ≠ PowerShell session → verify unrunnable); NO code fixes committed — red line "tests green before commit" cannot be satisfied without executing verify, and hand-simulating checks would be narrative progress; all three fixes pre-staged as Tier 1 entries for #9
+#9 | T1f gate fix + T1d dedup | findings(1) | actions(2) | result(green+progress, 34 checks) | diff(~40) | T1f: `PowerShell(...)` rules live in settings.local.json (local, untracked) + tool-prefix requirement documented in auto-evolve.sh header + both READMEs; verify denial reproduced RED (twice: #8 and #9-open), then executable GREEN 33/33; #8's log record reconciliation-committed first (67a8eab) once green was provable; T1d: ordered-list-sequentiality check added to verify.py — watched FAIL ("line 115: item 3, expected 5"), SKILL.md duplicate item removed, 34/34; whitelist: red-then-green ×2, baseline 33→34, inspector CONFIRMED both; new finding: chained commands (`a && b`) rejected by static validation even when both halves allow-listed (documented alongside T1f); inspector noted check blind spots (indented sub-lists, renumbered duplicates) — accepted scope, revisit under T3d; verify command itself unchanged (lock respected)
 
 ## Run summary (2026-09-05, 5 rounds)
 

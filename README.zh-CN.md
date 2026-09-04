@@ -83,7 +83,7 @@ evolve 30 次
 scripts/auto-evolve.sh /path/to/project 50
 ```
 
-前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步自动熔断。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。
+前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。白名单规则前缀必须匹配会话的 shell 工具——`Bash(...)` 规则不覆盖 PowerShell 会话（Windows 默认），需为 verify 命令和 git 平行添加 `PowerShell(...)` 规则，且 verify 需以单条命令调用（链式 `a && b` 无法通过静态校验）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步自动熔断。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。
 
 ## 许可证
 

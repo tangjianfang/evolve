@@ -8,9 +8,14 @@
 #   profiled verify command (the driver never profiles a project itself).
 # - Permissions: by default each session runs `claude -p` with
 #   --permission-mode acceptEdits. The project's verify commands still need
-#   Bash approval — pre-configure an allow-list in the project's
+#   approval — pre-configure an allow-list in the project's
 #   .claude/settings.local.json, or pass --danger for
 #   --dangerously-skip-permissions (trusted projects only).
+# - Allow-list rule prefixes must match the session's shell tool: Bash(...)
+#   rules do not cover a PowerShell session (Windows default), so add
+#   parallel PowerShell(...) rules for the verify command and git (proved
+#   live in round #9). Chained commands (a && b) fail static validation
+#   even when both halves are allow-listed — invoke verify as one command.
 # - Auto-push happens only if the project's evolve-log header declares
 #   `push: auto-authorized`; otherwise rounds commit without pushing.
 # - Stops early on: 3 consecutive no-progress rounds (circuit breaker) or

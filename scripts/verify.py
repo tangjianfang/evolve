@@ -74,6 +74,26 @@ if fm:
     check("description has English trigger", "iterate" in desc.lower())
     check("description has Chinese trigger", "迭代" in desc)
 
+# Ordered lists must number sequentially from 1 (guards against edit-dropped
+# or duplicated items, e.g. the #6 crystallization edit duplicating a
+# retrospective output). Column-0 `N. ` starts/continues a list; blank and
+# indented lines are continuations; any other column-0 line starts a new list.
+seq_fail = []
+expected = 1
+for lineno, line in enumerate(skill.splitlines(), 1):
+    item = re.match(r"^(\d+)\.\s", line)
+    if item:
+        num = int(item.group(1))
+        if num != expected:
+            seq_fail.append(f"line {lineno}: item {num}, expected {expected}")
+        expected = num + 1
+    elif not line.strip() or line[0].isspace():
+        continue
+    else:
+        expected = 1
+check("SKILL.md ordered lists numbered sequentially", not seq_fail,
+      "; ".join(seq_fail[:3]))
+
 # --- docs & links ----------------------------------------------------------
 
 check("LICENSE exists and is MIT",

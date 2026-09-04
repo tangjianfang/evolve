@@ -112,7 +112,6 @@ After N rounds, the last round **must** be the retrospective. Run the **replay a
 2. **Process improvements** → if this run hit a pit already covered by the lesson library, revise the corresponding step in this SKILL.md (source repo: github.com/tangjianfang/evolve — commit the revision there).
 3. **Crystallization** → when ≥ 3 lessons share a theme and carry ≥ 5 total verifications, promote them into structure: a named mechanism inside SKILL.md or a standalone small skill. Mark the source entries `crystallized → <where>` so the library records what grew into what.
 4. **Summary report** → big runs (≥ 20 rounds) update/create `docs/evolve-report.md` (template ships with the skill) including the metrics trend (findings / fixes / regressions over time); small runs append a summary block to evolve-log (outcome numbers, fix list, lesson index).
-3. **Summary report** → big runs (≥ 20 rounds) update/create `docs/evolve-report.md` (template ships with the skill) including the metrics trend (findings / fixes / regressions over time); small runs append a summary block to evolve-log (outcome numbers, fix list, lesson index).
 
 The retrospective itself counts as a round with its own commit — experience capture is not a bonus, it is part of the iteration.
 
