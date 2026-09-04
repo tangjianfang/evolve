@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- verify.py: wiring check pinning the driver's run-position prompt (T1g — the fix shipped in 1.3.1 without a check; the new check was watched failing as the only red check on the pre-fix tree, then green), plus two structural checks on the lessons library (5-column template present, `verified` counters are integers). Suite: 71 → 74 checks.
+- Lessons E8 (execute behavior against fixtures — substring probes pass behavior-flipping mutants) and E9 (single writer per tree + the yield procedure on mid-round foreign changes); SKILL.md Autonomous mode amended accordingly (driver states run position; single-writer rule).
+
+### Fixed
+
+- evolve-log hygiene: round #13's line relocated into the Rounds block, and its `result` corrected `green+progress` → `green+no-progress` — a docs-only round carries no whitelist credential (the label overstated; the work itself was real, and the missing red-then-green credential for T1g is supplied above).
+
 ## [1.3.1] - 2026-09-05
 
 First autonomous run (driver `auto-evolve.sh`, 5 headless sessions on this repo, rounds #8–#12): one honest blocked round + four progressive rounds, verify suite 33 → 71 checks, every fix red-then-green with adversarial-inspector confirmation.

@@ -17,6 +17,7 @@ Entry template: `| id | one-sentence lesson | how to apply (an executable action
 | id | lesson | how to apply | source | verified |
 |---|---|---|---|---|
 | E2 | A repo with no build system still needs a verification command — define one in round 1, don't hand-wave | On profiling a docs/prompt repo, create a structural check suite (JSON parse, frontmatter fields, version consistency, link resolution), wire it into CI, and use the check count as the baseline | evolve #1; autonomous run #8–#12 leaned on it for every whitelist claim (33 → 71 checks) | 2 |
+| E8 | Substring assertions about a script's source survive behavior-flipping mutations — #11's probes passed 2/6; only executing the behavior catches them | When a check guards a script, run the script against fixture inputs and assert its decision (breaker.sh's 24 fixtures); keep substring checks for wiring that cannot be executed (e.g. a claude prompt string) and mutation-probe both kinds | #11 → #12 (final replay: 15/15 mutants killed, every one behaviorally) | 1 |
 
 ## protocol
 
@@ -42,3 +43,4 @@ Entry template: `| id | one-sentence lesson | how to apply (an executable action
 |---|---|---|---|---|
 | E6 | Autonomy blocks in the permission layer, not the protocol layer: allow-list prefixes must match the session's shell tool, and chained commands fail static validation even when both halves are allowed | Before an autonomous run, configure BOTH `Bash(...)` and `PowerShell(...)` rules (or the platform's shell) for verify + git; invoke verify as a single command; document it in the driver header (round #9 did) | autonomous run #8 (blocked) → #9 (unblocked), 2026-09-05 | 1 |
 | E7 | A driver must tell each session its run position, or the mandatory final-round retrospective silently never happens | Pass "round i of N" in every session prompt and instruct round N to run the retrospective instead of a normal round (landed as T1g fix, commit c788c52) | autonomous run #8–#12: #12 even flagged "next: retrospective" in the log but no session could act on it | 1 |
+| E9 | Two agent sessions in one working tree corrupt each other's rounds silently — mid-round file rewrites, interleaved commits, double round lines | One driver per tree, no parallel manual sessions; a session that sees state change beneath it stops editing, re-reads the log header, and yields (result(blocked), citing the foreign commit) or re-scopes on top — never continues from a stale snapshot | live collision 2026-09-05: two concurrent retrospective sessions; one yielded and re-scoped as round #14 | 1 |

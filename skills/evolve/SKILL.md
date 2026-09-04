@@ -74,10 +74,11 @@ Long runs (N ≥ 10) degrade as context fills. Rules:
 
 Fully automated runs: the user launches `scripts/auto-evolve.sh <project> <N>` (a driver looping headless `claude -p` sessions) and walks away. Differences from interactive mode:
 
-1. **One round per session** — each headless session runs exactly one round and exits; the driver owns rounds 1..N, and Step 0's pointer makes every session resume cleanly. Context is always fresh: the compaction problem disappears by construction.
+1. **One round per session** — each headless session runs exactly one round and exits; the driver owns rounds 1..N, and Step 0's pointer makes every session resume cleanly. Context is always fresh: the compaction problem disappears by construction. The driver's prompt states each session's position (`round i of N`) and flags round N as the retrospective — sessions cannot infer this from the log alone (T1g, proved live: a run's final round silently did a normal round instead).
 2. **Auto-push** — if the evolve-log header declares `- push: auto-authorized`, step 6 commits AND pushes. Without that declaration the no-push red line stands.
 3. **No user prompts** — profiling defines verification commands itself and records them as self-defined (E3); destructive operations are outright forbidden in autonomous mode (no confirmation is possible) — if a round would need one, log `result(blocked)` and pick the next target.
 4. **Circuit breaker** — 3 consecutive `no-progress` rounds → stop and report "converged or needs human input". Never manufacture progress to keep the loop alive.
+5. **Single writer per tree** — one driver (and no parallel manual session) per project working tree. If a session observes repo state changing beneath it mid-round — files rewritten between its own reads, commits or pushes it did not make — it must stop editing immediately, re-read the log header, and either yield (log `result(blocked)` citing the foreign commit) or re-scope its round on top of the new state; never keep editing from a stale snapshot (live collision 2026-09-05: two concurrent retrospective sessions, one yielded and re-scoped as the next round).
 
 ## Anti-gaming rules (objective anchors, every round)
 

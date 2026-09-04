@@ -303,6 +303,18 @@ check("driver survives a failed round session instead of dying under set -e",
       bool(re.search(r'if \(cd "\$PROJECT" && claude -p', driver))
       and driver.count("failures=0") >= 2 and "-ge 3" in driver)
 
+# T1g: a headless session cannot see the driver's loop counter — unless the
+# driver SAYS it, the mandatory final-round retrospective silently never
+# happens (proved live: run #8–#12 ended on a normal round, not a
+# retrospective). The prompt must state the position in every round and
+# switch the final round to retrospective instructions. Wiring check — the
+# prompt itself cannot be executed without launching claude.
+check("driver tells each session its run position (final round → retrospective)",
+      'POSITION="This is driver round $i of $N."' in driver
+      and "$POSITION Step 0" in driver
+      and '-eq "$N"' in driver
+      and "run the RETROSPECTIVE" in driver)
+
 # A non-numeric or zero <rounds> must fail loudly at startup: bash
 # arithmetic evaluates an identifier like '--danger' to 0, so a swapped
 # argument list would silently run zero rounds. The guard must be negated
@@ -322,6 +334,20 @@ done_m = re.search(r"^- rounds done:\s*(\d+)", log_text, re.MULTILINE)
 check("round lines in evolve-log match header 'rounds done'",
       bool(done_m) and len(round_lines) == int(done_m.group(1)),
       f"{len(round_lines)} round lines vs rounds done {done_m.group(1) if done_m else '—'}")
+
+# --- lessons library ---------------------------------------------------------
+# The retrospective step re-checks every lesson and bumps `verified`
+# counters; a row whose verified column drifts out of integer format (or a
+# library that loses the 5-column template) rots silently — SKILL.md says
+# the library must not rot, so the suite guards the structure.
+lessons_text = (ROOT / "docs" / "lessons.md").read_text(encoding="utf-8")
+check("lessons.md declares the 5-column entry template",
+      "| id | lesson | how to apply | source | verified |" in lessons_text)
+lesson_rows = [l for l in lessons_text.splitlines() if re.match(r"^\| E\d+ \|", l)]
+check("lessons.md verified counters are integers",
+      bool(lesson_rows)
+      and all(re.search(r"\|\s*\d+\s*\|\s*$", l) for l in lesson_rows),
+      f"{sum(1 for l in lesson_rows if not re.search(r'\\|\\s*\\d+\\s*\\|\\s*$', l))} malformed rows")
 
 # --- summary ----------------------------------------------------------------
 
