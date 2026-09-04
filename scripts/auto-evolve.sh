@@ -53,6 +53,11 @@ if [ ! -f "$LOG" ]; then
   exit 1
 fi
 
+# Stop rules (no-progress circuit breaker + converged header) live in
+# breaker.sh — the single source of truth, shared with verify.py's
+# behavioral fixture checks (T4f).
+source "$(dirname "$0")/breaker.sh"
+
 consecutive_failures=0
 for ((i = 1; i <= N; i++)); do
   echo "=== auto-evolve round $i/$N ==="
@@ -74,19 +79,8 @@ for ((i = 1; i <= N; i++)); do
     fi
   fi
 
-  # Circuit breaker: 3 consecutive no-progress ROUNDS. Round lines look like
-  # '#N | target | ... | result(green+no-progress, ...) | ...' — the log's
-  # file tail can be a run-summary block, so select the round lines, take the
-  # last 3, and stop only when all 3 are no-progress (T1e). Reading the log
-  # (not a counter) also survives driver restarts mid-run.
-  recent=$(grep -E '^#[0-9]+ \|' "$LOG" | tail -n 3 || true)
-  if [ -n "$recent" ] \
-    && [ "$(grep -c 'result(green+no-progress' <<<"$recent")" -eq 3 ]; then
-    echo "!! circuit breaker: 3 consecutive no-progress rounds — stopping." >&2
-    break
-  fi
-  if grep -q "^- status: converged" "$LOG"; then
-    echo "== converged — stopping."
+  if should_stop "$LOG"; then
+    echo "!! stopping: $breaker_reason (see breaker.sh for the rules)." >&2
     break
   fi
 done

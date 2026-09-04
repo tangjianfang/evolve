@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Behavioral verification harness** (T4f): the driver's stop rules were extracted into `scripts/breaker.sh` (single source of truth, sourced by `auto-evolve.sh`), and `scripts/verify.py` now executes them against twenty-four fixture logs — asserting the stop/continue decision itself instead of substring-probing the driver's source (mutation probes had passed the old checks 2/6; five adversarial-inspection rounds drove the harness to kill every known behavior-changing mutant, behaviorally). Both scripts are also parsed with `bash -n`. Suite: 40 → 71 checks.
+
+### Fixed
+
+- Circuit breaker was fragile in three ways the old substring checks could not see: round notes QUOTING the vocabulary false-stopped healthy runs (E3/F3); a free-form TARGET containing `' | '` silently disabled the breaker (G2); a TARGET mimicking the result syntax could shadow the real column — including deliberately, as an anti-gaming evasion (H2/H3). The count now reads the FIRST `' | '`-delimited field with a full `result(<vocabulary>, ` shape, scanning from field 3 — inert to all three (inspector rounds, #12).
+- Verify-gate unrunnable in autonomous PowerShell sessions — allow-list tool prefixes documented (T1f, #9).
+- SKILL.md retrospective output list carried a duplicated item; ordered-list sequentiality now checked (#9, T1d).
+- Circuit breaker read the log's file tail instead of the round lines and counted any single match as a streak (T1e, #10); driver no longer dies under `set -e` on a failed `claude -p` session and validates `<rounds>` as a positive integer (#11).
+
 ## [1.3.0] - 2026-09-05
 
 Full autonomy + anti-gaming: N rounds with zero user interaction, where every round must earn its progress by evidence.

@@ -10,7 +10,10 @@ Usage: python scripts/verify.py
 
 import json
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -132,20 +135,164 @@ check("CI workflow exists", (ROOT / ".github" / "workflows" / "verify.yml").exis
 check("autonomous driver exists", (ROOT / "scripts" / "auto-evolve.sh").exists())
 
 # --- autonomous driver: circuit breaker -------------------------------------
-# The breaker must stop on 3 consecutive no-progress ROUNDS. Round lines look
-# like '#N | target | ... | result(green+no-progress, ...) | ...' — the log's
-# file tail can be a run-summary block instead of round lines, and a single
-# match inside a tail window is not "3 consecutive" (T1e).
+# The stop rules (no-progress breaker + converged header) live in breaker.sh,
+# sourced by the driver — one source of truth. Structural checks below pin
+# the wiring; the fixture probes above them pin the BEHAVIOR (T4f: substring
+# probes on the driver source passed mutation testing only 2/6 before).
 
 driver = (ROOT / "scripts" / "auto-evolve.sh").read_text(encoding="utf-8")
+bash_bin = shutil.which("bash")
+breaker_path = ROOT / "scripts" / "breaker.sh"
+check("breaker.sh exists", breaker_path.exists())
+breaker = breaker_path.read_text(encoding="utf-8") if breaker_path.exists() else ""
+
+check("driver sources breaker.sh and calls should_stop (single stop-rule source)",
+      'source "$(dirname "$0")/breaker.sh"' in driver
+      and 'should_stop "$LOG"' in driver)
+
+if bash_bin:
+    # Substring checks cannot see a syntax error; parse both scripts for real.
+    for sh in ("scripts/auto-evolve.sh", "scripts/breaker.sh"):
+        parsed = subprocess.run(["bash", "-n", (ROOT / sh).as_posix()],
+                                capture_output=True, text=True)
+        check(f"bash -n parses {sh}", parsed.returncode == 0,
+              parsed.stderr.strip()[:120])
 
 check("circuit breaker selects round lines, not the file tail",
-      bool(re.search(r"grep -E '\^#\[0-9\]\+ \\\|'", driver))
-      and '"$LOG" | tail -n 3' in driver
-      and "tail -n 5" not in driver)
-check("circuit breaker fires only when the last 3 round lines are all no-progress",
-      "grep -c 'result(green+no-progress'" in driver and "tail -n 3" in driver
-      and "-eq 3" in driver and "streak" not in driver)
+      bool(re.search(r"grep -E '\^#\[0-9\]\+ \\\|'", breaker))
+      and '"$log" | tail -n 3' in breaker
+      and "tail -n 5" not in breaker)
+check("circuit breaker counts the result FIELD, not a line substring",
+      "awk -F' [|] '" in breaker
+      and "/^result\\(green\\+no-progress/" in breaker
+      and "tail -n 3" in breaker and "-eq 3" in breaker and "streak" not in breaker)
+
+# Behavioral probes: run scripts/breaker.sh against fixture logs and assert
+# the stop/continue decision itself. Fixtures encode the T1e bug shape (a
+# run-summary block following the rounds) and the vocabulary rules.
+def breaker_probe(log_text):
+    """Run breaker.sh on a fixture log; return (exit_code, reason)."""
+    with tempfile.TemporaryDirectory() as td:
+        fixture = Path(td) / "evolve-log.md"
+        fixture.write_text(log_text, encoding="utf-8", newline="\n")
+        proc = subprocess.run(
+            ["bash", breaker_path.as_posix(), fixture.as_posix()],
+            capture_output=True, text=True, encoding="utf-8", errors="replace")
+        return proc.returncode, proc.stdout.strip()
+
+def fixture_log(rounds, status="active", tail="", note="notes",
+                target="target", checks=40):
+    """Real-format log: title, header block, ## Rounds section, optional
+    ## Run summary block — mirroring docs/evolve-log.md and the template
+    (a bare list of round lines would not exercise heading interference).
+    `note` applies to every round: a string, or a per-round list. Literals
+    vary per round (findings/actions/checks/diff) the way real logs do, so
+    a full-literal matcher cannot pass vacuously (P13, #12). `target` is
+    free-form and may contain ' | ' (G2, #12)."""
+    notes = [note] * len(rounds) if isinstance(note, str) else list(note)
+    assert len(notes) == len(rounds)
+    lines = [
+        "# evolve log — fixture",
+        "",
+        "- verify: python -c pass",
+        f"- rounds done: {len(rounds)}",
+        f"- status: {status}",
+        "",
+        "## Rounds",
+        "",
+    ]
+    lines += [f"#{n} | {target} | findings({1 + n % 3}) | actions({n % 2}) | "
+              f"result({r}, {checks + n} checks) | diff(~{30 + n}) | {nt}"
+              for n, (r, nt) in enumerate(zip(rounds, notes), 1)]
+    lines += ["", "## Run summary", "", tail] if tail else []
+    return "\n".join(lines) + "\n"
+
+if not bash_bin:
+    check("breaker fixtures: bash available to run behavioral probes",
+          False, "bash not on PATH (git-bash on Windows / any POSIX CI)")
+
+if bash_bin:
+    NP, PR = "green+no-progress", "green+progress"
+    SUMMARY_NP = ("- result vocabulary: green+progress / green+no-progress /"
+                  " red / blocked / interrupted — a result(green+no-progress"
+                  " round earns no progress")  # summary text mentions the word
+    CASES = [
+        ("fires on 3 consecutive no-progress rounds",
+         fixture_log([PR, PR, NP, NP, NP], tail=SUMMARY_NP), 0, "no-progress"),
+        ("does not fire when a no-progress-mentioning run summary trails healthy rounds",
+         fixture_log([PR, PR, PR, PR, PR], tail=SUMMARY_NP), 1, ""),
+        ("does not fire when only 2 of the last 3 rounds are no-progress",
+         fixture_log([PR, PR, PR, NP, NP]), 1, ""),
+        ("does not fire when early no-progress rounds precede healthy ones (tail window, not cumulative)",
+         fixture_log([NP, NP, NP, PR, PR]), 1, ""),
+        ("fires when 4+ consecutive rounds are no-progress (count is on the tail window)",
+         fixture_log([NP, NP, NP, NP]), 0, "no-progress"),
+        ("does not fire with fewer than 3 rounds, all no-progress",
+         fixture_log([NP, NP]), 1, ""),
+        ("does not fire on legacy result(green, ...) vocabulary rows",
+         fixture_log(["green, 40 checks"] * 3), 1, ""),
+        ("does not fire on a header-only log with zero rounds",
+         fixture_log([]), 1, ""),
+        ("does not fire on 'converged' in a round note while the header is active",
+         fixture_log([PR, PR], note="pool converged after refresh"), 1, ""),
+        ("does not fire on 'status: converged' quoted in a round note",
+         fixture_log([PR, PR], note="considered status: converged, kept active"), 1, ""),
+        ("does not fire when the 3-round window boundary cuts a no-progress run",
+         fixture_log([PR, NP, NP, NP, PR]), 1, ""),
+        ("does not fire on last-3 blocked rounds (only no-progress breaks)",
+         fixture_log(["blocked"] * 3), 1, ""),
+        ("does not fire on last-3 red rounds (only no-progress breaks)",
+         fixture_log(["red"] * 3), 1, ""),
+        ("does not fire when progress rounds merely QUOTE the no-progress word in notes",
+         fixture_log([PR, PR, PR],
+                     note=["notes quote `result(green+no-progress` rows"] * 3), 1, ""),
+        ("does not fire when notes mention it after a plain space (no pipe column)",
+         fixture_log([PR, PR, PR],
+                     note=["saw result(green+no-progress rows earlier"] * 3), 1, ""),
+        ("does not fire when notes quote the anchored pattern verbatim, pipe included",
+         fixture_log([PR, PR, PR],
+                     note=["breaker greps ' | result(green+no-progress' per #12"] * 3), 1, ""),
+        ("does not fire on an ACTIVE status whose suffix mentions convergence",
+         fixture_log([PR, PR, PR],
+                     status="active — pool converged, retrospective pending"), 1, ""),
+        ("fires when the TARGET contains a pipe (result column shifts right)",
+         fixture_log([NP, NP, NP], target="T4f (mutation | behavioral)"),
+         0, "no-progress"),
+        ("does not fire when a TARGET mimics the result prefix without the full shape",
+         fixture_log([PR, PR, PR],
+                     target="result(green+no-progress probe — fake shape"), 1, ""),
+        ("fires on genuine no-progress rounds even when the TARGET starts result(-shaped",
+         fixture_log([NP, NP, NP], target="result(field) parsing fix"),
+         0, "no-progress"),
+        ("fires when the TARGET merely CONTAINS result( mid-string",
+         fixture_log([NP, NP, NP], target="count result( fields correctly"),
+         0, "no-progress"),
+        ("does not fire on healthy rounds whose TARGET fakes the FULL result shape",
+         fixture_log([PR, PR, PR],
+                     target="result(green+no-progress, fake) probe"), 1, ""),
+        ("fires on genuine no-progress rounds whose TARGET fakes the FULL result shape",
+         fixture_log([NP, NP, NP],
+                     target="result(green+no-progress, fake) probe"),
+         0, "no-progress"),
+        ("fires when a pipe-shifted TARGET segment starts result(-shaped",
+         fixture_log([NP, NP, NP],
+                     target="T4f | result(field) parsing fix"),
+         0, "no-progress"),
+        ("fires when a pipe-shifted TARGET segment merely CONTAINS the result shape",
+         fixture_log([NP, NP, NP],
+                     target="T4f | see result(green+no-progress, fake) inline"),
+         0, "no-progress"),
+        ("fires on a converged header even when rounds are healthy",
+         fixture_log([PR, PR, PR], status="converged"), 0, "converged"),
+        ("fires on a converged header that carries a suffix note",
+         fixture_log([PR, PR, PR], status="converged — all targets clean"),
+         0, "converged"),
+    ]
+    for name, text, want_rc, want_reason in CASES:
+        rc, reason = breaker_probe(text)
+        check(f"breaker behavior: {name}",
+              rc == want_rc and reason == want_reason,
+              f"exit {rc} ({reason!r}), want {want_rc} ({want_reason!r})")
 
 # The driver runs under `set -euo pipefail`: an unguarded `claude -p`
 # non-zero exit (rate limit, crashed session) kills the driver before the
