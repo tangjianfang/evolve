@@ -61,13 +61,20 @@ source "$(dirname "$0")/breaker.sh"
 consecutive_failures=0
 for ((i = 1; i <= N; i++)); do
   echo "=== auto-evolve round $i/$N ==="
+  # T1g: sessions cannot know their run position from the log alone — the
+  # driver must say it, or the mandatory final-round retrospective silently
+  # never happens (proved live: run #8–#12 closed on T4f, not a retrospective).
+  POSITION="This is driver round $i of $N."
+  if [ "$i" -eq "$N" ]; then
+    POSITION="This is the FINAL round ($i of $N) of this run. Do NOT start a normal round: run the RETROSPECTIVE exactly as the protocol defines it (replay audit first, then its outputs), record it as a round with its own commit, and set the log status accordingly."
+  fi
   # Guarded, not bare: under `set -e` a non-zero claude exit (rate limit,
   # crashed session) would kill the driver before the breakers below ever
   # run. Instead report it, still let the breakers read the log (the round
   # may have appended its line before dying), and abort only on 3
   # consecutive failed sessions — mirroring the no-progress breaker.
   if (cd "$PROJECT" && claude -p "${PERMS[@]}" \
-    "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round."); then
+    "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). $POSITION Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round."); then
     consecutive_failures=0
   else
     rc=$?
