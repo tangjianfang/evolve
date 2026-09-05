@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Circuit breaker's status stop-channels (`converged` / `pending-epics`) read the log's header region only — a col-0 terminating-status line quoted inside an old run-summary block no longer false-stops a resumed run (evolve #21; pinned by two behavioral fixtures watched red-then-green, suite 86 → 88).
+
 ## [1.4.0] - 2026-09-05
 
 Epic escalation (innovation/refactor graduation behind a user review gate), the nine-role senior-team model, bilingual architecture diagrams, token-waste guards, and the pending-epics breaker channel — landed across evolve rounds #15–#19 with the verification suite growing 74 → 86 checks.

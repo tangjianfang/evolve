@@ -39,7 +39,16 @@ should_stop() {
     breaker_reason="no-progress"
     return 0
   fi
-  if grep -q "^- status: converged" "$log"; then
+  # Status channels read the HEADER region only — lines before the first
+  # `## ` heading. A col-0 terminating-status line quoted inside an old
+  # run-summary block must not false-stop a resumed run (#21; both channels
+  # inherited the whole-file grep from #10's converged channel). A log with
+  # no `## ` heading at all — or one whose first line IS a `## ` heading
+  # (POSIX 1,/re/ never tests addr2 on addr1's line, so the range never
+  # closes) — degenerates to the whole file (fail-safe).
+  local header_region
+  header_region=$(sed -n '1,/^## /p' "$log" 2>/dev/null || true)
+  if grep -q "^- status: converged" <<<"$header_region"; then
     breaker_reason="converged"
     return 0
   fi
@@ -47,7 +56,7 @@ should_stop() {
   # breaker can see it — the session sets `- status: pending-epics` when it
   # ends a run because every remaining target is parked awaiting an epic
   # decision; without this channel the driver burns empty sessions up to N.
-  if grep -q "^- status: pending-epics" "$log"; then
+  if grep -q "^- status: pending-epics" <<<"$header_region"; then
     breaker_reason="pending-epics"
     return 0
   fi

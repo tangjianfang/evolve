@@ -332,6 +332,18 @@ if bash_bin:
                      note="all parked; next session sets status: pending-epics"), 1, ""),
         ("does not fire on an ACTIVE status whose suffix mentions pending-epics",
          fixture_log([PR, PR, PR], status="active — pending-epics watch continues"), 1, ""),
+        # #19 accepted residual, closed #21: the status channels grepped the
+        # WHOLE file — a col-0 terminating-status line inside an old run-summary
+        # block false-stopped a resumed run. The channels must read the header
+        # region only (lines before the first `## ` heading).
+        ("does not fire on a historical pending-epics status at col-0 in a summary block",
+         fixture_log([PR, PR, PR],
+                     tail="- status: pending-epics — recorded 2026-09-05, since decided"),
+         1, ""),
+        ("does not fire on a historical converged status at col-0 in a summary block",
+         fixture_log([PR, PR, PR],
+                     tail="- status: converged — recorded 2026-09-04 run"),
+         1, ""),
     ]
     for name, text, want_rc, want_reason in CASES:
         rc, reason = breaker_probe(text)
