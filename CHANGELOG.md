@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Lesson E11 (mechanism-state orphan law: every state a mechanism writes needs set/terminate/reset ownership in a named step — three live cases across #10/#18/#19); E2 → 4, E8 → 3 (evolve #22 retrospective; replay audit 2/2 clean).
+
 ### Fixed
 
 - Circuit breaker's status stop-channels (`converged` / `pending-epics`) read the log's header region only — a col-0 terminating-status line quoted inside an old run-summary block no longer false-stops a resumed run (evolve #21; pinned by two behavioral fixtures watched red-then-green, suite 86 → 88).
