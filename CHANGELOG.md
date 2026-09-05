@@ -5,11 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.0] - 2026-09-05
+
+First innovation run (operator-directed: every round borrows ONE external mechanism — E5, steal mechanisms not architectures), rounds #23–#28: suite 88 → 101 checks, every step watched red-then-green or mutation-probed.
 
 ### Added
 
-- Lesson E11 (mechanism-state orphan law: every state a mechanism writes needs set/terminate/reset ownership in a named step — three live cases across #10/#18/#19); E2 → 4, E8 → 3 (evolve #22 retrospective; replay audit 2/2 clean).
+- **Mid-run lesson capture** (borrowed from NVIDIA cuOpt's cuopt-skill-evolution, via VoltAgent/awesome-agent-skills): SKILL.md step 7 — a round that itself surfaces a generalizable insight (thrash before landing, inspector refutation, workaround, protocol gap) appends it to `docs/lessons.md` in the same commit with `verified 0`, so a run that ends early no longer loses what it learned; the retrospective's re-check gives the first verification. First live trigger in #27 → lesson E12. Suite: 88 → 90.
+- **Protocol-drift notice** (session-start hook, borrowed from Claude Code's lifecycle-hook theme; prior art gstack-upgrade): `scripts/check-update.sh` compares the installed manifest against GitHub main and prints one line when a newer release exists — never self-updates, silent and non-blocking offline (5s timeout, `EVOLVE_VERSION_URL` override, offline-testable `--compare` core). Wired into SKILL.md Step 0 after the marketplace silently auto-moved this plugin 1.3.1 → 1.4.0 mid-day, stranding long sessions on the stale protocol. Suite: 90 → 93.
+- **Seed lessons** in the shipped lessons template (Meta-Policy Reflexion's cross-task reflective memory + Voyager's starter skill library): five generic rows under S-ids (distilled from evolve E2/E5/E8/E10/E11) with executable how-to-apply, so new adopters don't restart from an empty library; the first retrospective deletes whatever the project cannot apply. SKILL.md profiling points the copier at them. Suite: 93 → 95.
+- **Packaging quality lint** (VoltAgent skill-quality standard / eskill's validator concept): SKILL.md body pinned <500 lines; no machine-specific absolute paths in SKILL.md or any shipped template. Both guards proven to bite via mutation probes (planted path → FAIL naming the file; 645-line bloat → FAIL with count). Suite: 95 → 97.
+- **Mutation self-audit** (AlphaEvolve's bottleneck lesson: evaluator quality, not evaluator count, drives self-improvement): the retrospective's replay audit now also mutation-probes 2 of the run's newly added checks — flip the guarded artifact, expect FAIL, revert — with outcomes recorded in the retrospective log line. Suite: 97 → 98.
+- **Round-complete hook** (Claude Code lifecycle-hook pattern): `AUTO_EVOLVE_ROUND_HOOK='<command>'` runs a user command after every successful autonomous round (notification, deploy, metrics export) — a hook failure is reported but never stops the run, and failed sessions fire no hook; documented in the driver header and both READMEs in the same round (E10). Suite: 98 → 101.
+- Lessons: E11 (mechanism-state orphan law — evolve #22) and E12 (never `git checkout --` a file carrying uncommitted round work to undo a probe; targeted inverse edits instead — evolve #27, first live trigger of the mid-run capture mechanism).
 
 ### Fixed
 
