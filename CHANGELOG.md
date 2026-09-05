@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - verify.py: wiring check pinning the driver's run-position prompt (T1g — the fix shipped in 1.3.1 without a check; the new check was watched failing as the only red check on the pre-fix tree, then green), plus two structural checks on the lessons library (5-column template present, `verified` counters are integers). Suite: 71 → 74 checks.
 - verify.py: manual-install completeness check — both READMEs' install instruction line must cover `docs/templates/`, anchored to the exact `**Manual:**`/`**手动安装：**` prefix so a templates mention elsewhere in the README cannot mask an omission, and a future `**Manual …:**` line above it cannot capture the match (inspector mutant, tightened on the spot). Suite: 74 → 77 checks (the two extra are link-resolution checks on the new README links).
 - Lessons E8 (execute behavior against fixtures — substring probes pass behavior-flipping mutants) and E9 (single writer per tree + the yield procedure on mid-round foreign changes); SKILL.md Autonomous mode amended accordingly (driver states run position; single-writer rule).
+- Lesson E10: installation/usage docs rot invisibly until someone follows them verbatim — #15's install-instruction defect had shipped with the templates since they landed in #2, and only a live install exposed it. Audit by executing the README path once in a clean target; guard standing with a line-anchored wiring check.
 
 ### Fixed
 
