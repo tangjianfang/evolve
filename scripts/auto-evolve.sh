@@ -2,7 +2,12 @@
 # auto-evolve — fully automated evolve runs: one round per headless session.
 #
 # Usage:
-#   scripts/auto-evolve.sh <project-path> <rounds> [--danger]
+#   scripts/auto-evolve.sh [--dry-run] <project-path> <rounds> [--danger]
+#
+# - --dry-run validates the configuration and prints the plan (project,
+#   rounds, permissions, log pointer, breaker state, hook) WITHOUT spawning
+#   any session — pilot the wiring for free before burning sessions
+#   (plan-first, borrowed from Claude Code's plan mode).
 #
 # - Requires one interactive round first, so docs/evolve-log.md exists with a
 #   profiled verify command (the driver never profiles a project itself).
@@ -28,8 +33,14 @@
 
 set -euo pipefail
 
+DRY_RUN=0
+if [ "${1:-}" = "--dry-run" ]; then
+  DRY_RUN=1
+  shift
+fi
+
 if [ $# -lt 1 ]; then
-  echo "usage: $0 <project-path> <rounds> [--danger]" >&2
+  echo "usage: $0 [--dry-run] <project-path> <rounds> [--danger]" >&2
   exit 1
 fi
 
@@ -61,6 +72,21 @@ fi
 # breaker.sh — the single source of truth, shared with verify.py's
 # behavioral fixture checks (T4f).
 source "$(dirname "$0")/breaker.sh"
+
+if [ "$DRY_RUN" = "1" ]; then
+  if should_stop "$LOG"; then
+    breaker_state="STOP ($breaker_reason)"
+  else
+    breaker_state="continue"
+  fi
+  echo "dry-run: project=$PROJECT"
+  echo "dry-run: rounds=$N perms=${PERMS[*]}"
+  echo "dry-run: pointer=$(sed -n 's/^- pointer: //p' "$LOG" | head -n 1)"
+  echo "dry-run: breaker would $breaker_state"
+  echo "dry-run: hook=${AUTO_EVOLVE_ROUND_HOOK:-<none>}"
+  echo "dry-run: no sessions spawned — pass no --dry-run to run for real."
+  exit 0
+fi
 
 consecutive_failures=0
 for ((i = 1; i <= N; i++)); do

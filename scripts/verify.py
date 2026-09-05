@@ -602,6 +602,33 @@ readmes = [(ROOT / "README.md").read_text(encoding="utf-8"),
 check("both READMEs point at the rollback procedure",
       all("git revert" in r for r in readmes))
 
+# --- driver --dry-run ---------------------------------------------------------
+# Claude Code's plan mode / Gemini CLI's preview idea: show what WOULD run
+# before anything runs. Unlike the round loop, the dry-run path spawns no
+# sessions, so the driver is EXECUTABLE here (E8): the suite asserts the
+# decision output and the argument-validation, not substrings.
+def run_driver(*args):
+    return subprocess.run(["bash", str(ROOT / "scripts" / "auto-evolve.sh"), *args],
+                          capture_output=True, text=True, cwd=ROOT)
+
+dry_ok = usage_ok = False
+if (ROOT / "scripts" / "auto-evolve.sh").exists():
+    dry = run_driver("--dry-run", str(ROOT), "3")
+    dry_ok = (dry.returncode == 0
+              and "dry-run: pointer=" in dry.stdout
+              and "dry-run: breaker would" in dry.stdout
+              and "dry-run: hook=" in dry.stdout)
+    bad = run_driver("--dry-run", str(ROOT), "abc")
+    usage_ok = bad.returncode == 1
+check("driver --dry-run prints plan and exits 0 without spawning sessions",
+      dry_ok)
+check("driver --dry-run still rejects a non-numeric rounds argument",
+      usage_ok)
+check("driver header documents --dry-run",
+      "dry-run" in driver_header)
+check("both READMEs document --dry-run",
+      all("--dry-run" in r for r in readmes))
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
