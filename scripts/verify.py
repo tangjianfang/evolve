@@ -431,6 +431,22 @@ check("lessons.md verified counters are integers",
       and all(re.search(r"\|\s*\d+\s*\|\s*$", l) for l in lesson_rows),
       f"{sum(1 for l in lesson_rows if not re.search(r'\\|\\s*\\d+\\s*\\|\\s*$', l))} malformed rows")
 
+# --- mid-run lesson capture --------------------------------------------------
+# Lessons used to land only at the retrospective, so a run that ended early
+# lost its insights (E11 surfaced in #18/#19 but only landed at #22; the
+# cuopt-skill-evolution borrow — mechanism, not architecture, E5 — captures
+# them in the round's own commit with verified 0). Both artifacts are prose
+# wiring that cannot execute: span-anchored checks per E8/E10's ceiling.
+step7_span = skill.split("7. **Record**", 1)[-1].split("## Long-run context management", 1)[0]
+check("SKILL.md step 7 owns mid-run lesson capture (same commit, verified 0)",
+      "mid-run" in step7_span
+      and "verified 0" in step7_span
+      and "same commit" in step7_span)
+lessons_header = lessons_text.split("## distribution", 1)[0]
+check("lessons.md header documents the mid-run capture convention",
+      "Mid-run capture" in lessons_header
+      and "verified 0" in lessons_header)
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")

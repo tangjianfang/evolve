@@ -5,6 +5,7 @@ Entry template: `| id | one-sentence lesson | how to apply (an executable action
 - Update an existing entry on the same topic instead of adding a duplicate.
 - Every retrospective re-checks entries: confirmed in action → `verified +1`; proved wrong or stale → rewrite or delete on the spot.
 - ≥ 3 same-theme lessons with ≥ 5 total verifications → crystallize into a named SKILL.md mechanism or a standalone skill; mark the entries `crystallized → <where>`.
+- Mid-run capture: a round that itself surfaces a generalizable lesson appends it in the same commit with `verified 0` — don't hold it for the retrospective, a run that ends early loses what it learned; the retrospective's re-check provides the first verification.
 
 ## distribution
 
