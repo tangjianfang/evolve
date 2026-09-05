@@ -31,6 +31,89 @@ The loop **converges**: targets that stay clean for 2 rounds are retired; 3 full
 
 Long runs are first-class: every 10 rounds evolve writes a checkpoint into the log and hands off to a fresh session, resuming from the pointer — context pressure never degrades round quality.
 
+### Architecture
+
+```text
+Input: "iterate N times" / "/evolve N"   (unspecified → N = 5)
+  │
+  ├── interactive mode ── the main session runs the rounds (Logic Engineer)
+  │
+  └── autonomous mode ── scripts/auto-evolve.sh driver
+        one headless session per round, prompt states "round i of N"
+        (without the position, the final-round retrospective silently
+        never happens — proved live); circuit breaker scripts/breaker.sh:
+        3 consecutive no-progress rounds / 3 failed sessions → stop
+  │
+  ▼
+Step 0 · every session reads: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/evolve-log.md
+  │      (log missing ⇒ first-run profiling: detect build/test commands,
+  │       fix the verify command + baseline, build the target pool)
+  ▼
+───────── per-round loop · i = 1..N · strict order ─────────
+
+  1. pick target    next pool item by tier priority 1→4 (pointer in the log header)
+      ↓
+  2. visual review  haiku subagent, UI targets with screenshots only;
+      │             findings must be re-verified (~15% hallucinated)
+      ↓
+  3. code review    Logic Engineer (main model): project conventions +
+      │             error handling / concurrency / leaks / dead code /
+      │             hardcoding / performance; modules ≤ ~2000 lines read
+      │             in full, larger ones expand on demand
+      ↓
+  4. act            1–3 items per round: fix bugs → optimize → small extension
+      ↓
+  5. verify         run the verify command locked in the log header —
+      │             all green or the round doesn't count (red / blocked)
+      ↓
+  6. commit         "evolve #i: …" standalone commit; never auto-pushed
+      ↓
+  7. record         one structured line appended to the log; pointer and
+      │             counters updated (header counters ≡ sum of round lines)
+      │
+      └─→ i < N: back to 1  (every 10 rounds: checkpoint + pool refresh,
+      hand off to a fresh session resuming from the pointer)
+──────────────────────────────────────────────────────────
+  │
+  ▼
+Termination: N rounds done / early convergence / breaker / user stop
+  → the final round is always the retrospective:
+  replay audit (git snapshot replay, strike gamed rounds)
+  → lessons update (verified+1 / rewrite / delete — the library must not rot)
+  → process improvement (a pit already covered by a lesson → revise SKILL.md)
+  → crystallization (≥3 same-theme lessons + ≥5 verifications → named mechanism)
+  → summary report (≥20 rounds → docs/evolve-report.md; small runs → log block)
+
+═══ cross-cutting layers ═══
+
+[target pool — feeds step 1]
+  Tier 1 known defects (issue-doc entries grepped against code — docs lag)
+  Tier 2 test-coverage gaps
+  Tier 3 module rotation (re-listed from the current src/ layout)
+  Tier 4 small-extension backlog (big items go through spec→plan, not rounds)
+  refresh: every 10 rounds or one full sweep (drop fixed, re-list modules)
+  convergence: a target clean 2 consecutive rounds → out for 10 rounds;
+               3 consecutive all-clean rounds + empty backlog → early stop
+
+[anti-gaming — every round; progress = evidence, never narrative]
+  progress whitelist (one of): new tests green / red-then-green fix /
+    measured improvement / inspector-confirmed fix
+  adversarial inspector: gets the bug + the tests, never the fix; told to refute
+  novelty guard (vs last 10 rounds) · difficulty guard (2 trivial rounds →
+    next must be Tier 1) · verify command locked · retrospective replay audit
+
+[state lives in the project — the resume-from-pointer foundation]
+  docs/evolve-log.md   verify command · pointer · rounds done · metrics · round lines
+  docs/lessons.md      lesson library (maintained by retrospectives)
+```
+
+Design rationale at a glance:
+
+- **Small rounds, big runs** — the ~300-line diff cap keeps every round independently revertible and attributable (a regression is one `git revert`; a progress claim is one replayable commit). Large features aren't blocked — they're decomposed into rounds through their own spec→plan flow.
+- **State lives in your repo** — pointer, pool, metrics, lessons: any session can die and the next resumes from the pointer.
+- **Progress = evidence** — the whitelist (new tests / red-then-green / measured improvement / inspector-confirmed) makes "improvement" auditable instead of narrative.
+- **The process improves itself** — retrospectives feed lessons back into `docs/lessons.md`, and lessons that keep proving out get crystallized into the protocol itself.
+
 ## Project data files
 
 evolve keeps its state inside your project:
