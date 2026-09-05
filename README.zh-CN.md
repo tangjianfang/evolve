@@ -181,7 +181,7 @@ evolve 30 次
 scripts/auto-evolve.sh /path/to/project 50
 ```
 
-前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。成本随 N 线性增长——大 N 长跑前先用小 N（如 5 轮）试跑，确认画像与权限都通，再放量。白名单规则前缀必须匹配会话的 shell 工具——`Bash(...)` 规则不覆盖 PowerShell 会话（Windows 默认），需为 verify 命令和 git 平行添加 `PowerShell(...)` 规则，且 verify 需以单条命令调用（链式 `a && b` 无法通过静态校验）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步或连续 3 次会话失败自动熔断；`status: pending-epics`（全部剩余目标停摆等待史诗决策）同样停机。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。
+前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。成本随 N 线性增长——大 N 长跑前先用小 N（如 5 轮）试跑，确认画像与权限都通，再放量。白名单规则前缀必须匹配会话的 shell 工具——`Bash(...)` 规则不覆盖 PowerShell 会话（Windows 默认），需为 verify 命令和 git 平行添加 `PowerShell(...)` 规则，且 verify 需以单条命令调用（链式 `a && b` 无法通过静态校验）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步或连续 3 次会话失败自动熔断；`status: pending-epics`（全部剩余目标停摆等待史诗决策）同样停机。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。设置 `AUTO_EVOLVE_ROUND_HOOK='<命令>'` 可在每个成功轮次后执行一条命令（通知、部署、导出指标）——钩子失败只报告、绝不中断 run，失败的会话不触发钩子。
 
 ## 许可证
 

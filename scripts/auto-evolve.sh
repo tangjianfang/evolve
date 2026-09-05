@@ -18,6 +18,9 @@
 #   even when both halves are allow-listed — invoke verify as one command.
 # - Auto-push happens only if the project's evolve-log header declares
 #   `push: auto-authorized`; otherwise rounds commit without pushing.
+# - Set AUTO_EVOLVE_ROUND_HOOK='<command>' to run a command after every
+#   successful round (notification, deploy, metrics export). A hook failure
+#   is reported but never stops the run; failed sessions fire no hook.
 # - Stops early on: 3 consecutive no-progress rounds (circuit breaker),
 #   3 consecutive failed `claude -p` sessions, `status: converged`, or
 #   `status: pending-epics` (every remaining target parked awaiting an
@@ -77,6 +80,14 @@ for ((i = 1; i <= N; i++)); do
   if (cd "$PROJECT" && claude -p "${PERMS[@]}" \
     "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). $POSITION Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked / interrupted. Then stop — do not start another round."); then
     consecutive_failures=0
+    # Round-complete hook (borrowed from Claude Code's lifecycle hooks): a
+    # deterministic user command after every successful round. Advisory
+    # only: a hook failure is reported and never stops the run, and failed
+    # sessions fire no hook (E11: stateless — nothing to own or reset).
+    if [ -n "${AUTO_EVOLVE_ROUND_HOOK:-}" ]; then
+      echo "--- round hook: $AUTO_EVOLVE_ROUND_HOOK"
+      sh -c "$AUTO_EVOLVE_ROUND_HOOK" || echo "!! round hook failed (non-fatal)" >&2
+    fi
   else
     rc=$?
     consecutive_failures=$((consecutive_failures + 1))

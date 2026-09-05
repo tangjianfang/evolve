@@ -522,6 +522,28 @@ check("replay audit owns the mutation self-audit of new checks",
       and "newly added checks" in rule5_span
       and "detection power" in rule5_span)
 
+# --- driver round-complete hook ----------------------------------------------
+# Claude Code's lifecycle-hook lesson: deterministic user commands at key
+# agent moments beat convention. The driver gained AUTO_EVOLVE_ROUND_HOOK —
+# a command after every SUCCESSFUL round (notify / deploy / export); hook
+# failure is non-fatal, failed sessions fire nothing. The driver spawns real
+# claude sessions, so the suite cannot execute it (E8's documented ceiling):
+# span-anchored wiring checks pin guard, ordering, and docs instead.
+driver = (ROOT / "scripts" / "auto-evolve.sh").read_text(encoding="utf-8")
+driver_header = driver.split("set -euo pipefail", 1)[0]
+check("driver header documents the round-complete hook",
+      "AUTO_EVOLVE_ROUND_HOOK" in driver_header
+      and "never stops the run" in driver_header)
+hook_span = driver.split("consecutive_failures=0", 1)[-1].split("if should_stop", 1)[0]
+check("driver runs the hook only after a successful session, non-fatally",
+      "AUTO_EVOLVE_ROUND_HOOK" in hook_span
+      and "sh -c" in hook_span
+      and "non-fatal" in hook_span)
+readmes = [(ROOT / "README.md").read_text(encoding="utf-8"),
+           (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")]
+check("both READMEs document the round-complete hook",
+      all("AUTO_EVOLVE_ROUND_HOOK" in r for r in readmes))
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
