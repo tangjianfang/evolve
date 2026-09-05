@@ -43,7 +43,7 @@ Long runs are first-class: every 10 rounds evolve writes a checkpoint into the l
 ```text
 Input: "iterate N times" / "/evolve N"   (unspecified → N = 5)
   │
-  ├── interactive mode ── the main session runs the rounds (Logic Engineer)
+  ├── interactive mode ── the session runs the rounds (sole writable context)
   │
   └── autonomous mode ── scripts/auto-evolve.sh driver
         one headless session per round, prompt states "round i of N"
@@ -63,7 +63,7 @@ Step 0 · every session reads: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/
   2. visual review  haiku subagent, UI targets with screenshots only;
       │             findings must be re-verified (~15% hallucinated)
       ↓
-  3. code review    Logic Engineer (main model): project conventions +
+  3. code review    Senior Code Reviewer (the session): project conventions +
       │             error handling / concurrency / leaks / dead code /
       │             hardcoding / performance; modules ≤ ~2000 lines read
       │             in full, larger ones expand on demand
