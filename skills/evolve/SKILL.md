@@ -33,6 +33,7 @@ Two mechanics in the table are load-bearing. The UX review is delegated via the 
 2. Read `docs/lessons.md` (missing = empty lesson library; the retrospective round will create it).
 3. Read `docs/evolve-log.md`. **If missing → run project profiling first** (below), then continue.
 4. Read `docs/epics.md` if present — open proposals park their targets out of the pool (Epic escalation, rule 1); never re-propose a target that already has an open proposal.
+5. Protocol-drift notice (session-start hook): if `scripts/check-update.sh` is present in the installation, run it once — it prints one line only when a newer release exists (`evolve <local> installed, <remote> available`). Surface that line to the user, then continue: **never self-update** (upgrading the plugin is the user's action via their plugin manager), and the script is **silent** offline (5s timeout) — never block the round on it. Why: plugin updates land silently (marketplace auto-upgrade), so a long-lived session can keep running a stale protocol without knowing.
 
 ## Project profiling (first run only)
 

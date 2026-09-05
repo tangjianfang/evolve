@@ -447,6 +447,30 @@ check("lessons.md header documents the mid-run capture convention",
       "Mid-run capture" in lessons_header
       and "verified 0" in lessons_header)
 
+# --- protocol-drift notice ---------------------------------------------------
+# Silent plugin updates strand long-lived sessions on a stale protocol (live
+# 2026-09-05: marketplace moved 1.3.1 -> 1.4.0 mid-day, no notice). The
+# check-update script is the session-start hook: one line when a newer
+# release exists, never a self-update, silent offline. The version compare is
+# executable ground truth (E8) — asserted via --compare, not substrings; the
+# SKILL.md wiring is prose and gets a span-anchored check (E8/E10 ceiling).
+upd = ROOT / "scripts" / "check-update.sh"
+check("check-update.sh parses (bash -n)",
+      upd.exists() and subprocess.run(["bash", "-n", str(upd)], capture_output=True).returncode == 0)
+cmp_ok = False
+if upd.exists():
+    runs = [subprocess.run(["bash", str(upd), "--compare", a, b], capture_output=True, text=True).stdout.strip()
+            for a, b in (("1.3.1", "1.4.0"), ("1.4.0", "1.4.0"), ("1.4.0", "1.3.1"))]
+    cmp_ok = runs == ["newer", "equal", "older"]
+check("check-update.sh --compare decides newer/equal/older",
+      cmp_ok,
+      f"{runs if upd.exists() else 'script missing'}")
+step0_span = skill.split("## Step 0", 1)[-1].split("## Project profiling", 1)[0]
+check("SKILL.md Step 0 wires the drift notice (present-when, never self-update, silent offline)",
+      "check-update.sh" in step0_span
+      and "never self-update" in step0_span
+      and "silent" in step0_span)
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
