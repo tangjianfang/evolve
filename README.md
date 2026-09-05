@@ -36,6 +36,8 @@ Each round is a strict seven-step loop, run by a senior engineering team — the
 
 The loop **converges**: targets that stay clean for 2 rounds are retired; 3 full-pool-clean rounds with **zero findings and zero regressions** trigger early termination — backed by data, not impression. The final round is always a **retrospective** that feeds lessons back into `docs/lessons.md` — and, when the process itself was the problem, back into this skill.
 
+**Epic escalation:** rounds are deliberately small (fix → optimize → extend). When the log shows round-sized work cannot close a target — fixes keep failing (≥2 red rounds), the target keeps re-entering the pool, three rounds can't finish it, the change can't be sliced into green-able ~300-line rounds, or the capability exceeds the current architecture — evolve stops grinding and writes a proposal to `docs/epics.md` (type refactor/innovate, trigger evidence, hypothesis, implementation sketch). **Rounds never execute epics**: proposals surface at run end for your review, and only approved epics proceed through their own spec→plan flow.
+
 Long runs are first-class: every 10 rounds evolve writes a checkpoint into the log and hands off to a fresh session, resuming from the pointer — context pressure never degrades round quality.
 
 ### Architecture
@@ -131,7 +133,7 @@ evolve keeps its state inside your project:
   ```
 - `docs/lessons.md` — accumulated lessons, each with an actionable "how to apply"
 
-First run on a new project? evolve profiles it automatically: detects build/test commands (CMake, package.json, pytest, cargo, go, maven, gradle — or asks you), greps known-issue docs against the code, and builds the target pool. Starter templates for all three data files ship with the skill under `docs/templates/`.
+First run on a new project? evolve profiles it automatically: detects build/test commands (CMake, package.json, pytest, cargo, go, maven, gradle — or asks you), greps known-issue docs against the code, and builds the target pool. Starter templates ship with the skill under `docs/templates/` (evolve-log, lessons, evolve-report, epics — the last created on first proposal).
 
 ## Safety rails (checked every round)
 

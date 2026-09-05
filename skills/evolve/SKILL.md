@@ -51,7 +51,7 @@ Generate the initial `docs/evolve-log.md`:
    - Tier 1, known defects: read the project's KNOWN_ISSUES/issues/TODO docs; grep the code for each entry to confirm it is actually unfixed (D7: docs lag behind code);
    - Tier 2, test coverage gaps;
    - Tier 3, module rotation review: list modules from the `src/` directory structure;
-   - Tier 4, backlog of small extensions (big items go through their own spec→plan flow, not into rounds).
+   - Tier 4, backlog of small extensions (big items go through their own spec→plan flow, not into rounds — targets graduate there via **Epic escalation**, below).
 3. Header block: `- verify: <command>`, `- pointer: #1 (next round)`, `- rounds done: 0`, `- status: initialized`, plus running counters `- metrics: findings 0 | fixes 0 | regressions 0`. Autonomous runs may also declare `- push: auto-authorized` (see Autonomous mode) — add it only when the user has explicitly authorized auto-push.
 
 ## Pool refresh (every 10 rounds, or after one full sweep of the pool)
@@ -62,13 +62,34 @@ A stale pool wastes rounds on an outdated map. When either trigger fires, do it 
 2. Re-list Tier 3 from the current `src/` structure — drop deleted modules, add new ones.
 3. Mention the refresh in that round's log line (action `pool-refresh`).
 
+## Epic escalation (innovation / refactor graduation)
+
+Rounds are deliberately small (fix → optimize → extend). When round-sized work demonstrably cannot close a target, escalate instead of grinding.
+
+**Trigger standard** — a target graduates to an epic candidate when ANY of these holds, each backed by log lines (the log is the telemetry; thresholds are defaults, tunable via project lessons):
+
+- (a) **cannot fix** — ≥2 `red` rounds on the same target (fixes keep failing)
+- (b) **whack-a-mole** — the same target's 3rd pool appearance (closed, then re-entered)
+- (c) **cannot finish** — ≥3 rounds landed on the same target and it is still open
+- (d) **cannot slice** — the needed change cannot be decomposed into independently-green ≤300-line rounds (cross-cutting rename, API migration)
+- (e) **cannot absorb** — the capability exceeds the current architecture (cross-module redesign, or a documented boundary blocks it) → innovation, not repair
+- (f) **user directive** — the user flags it; user instructions always trigger
+
+**Rules:**
+
+1. Proposing is a round action: it consumes one of the round's 1–3 action slots, at most one new proposal per round, at most one open proposal per target. Proposing alone is NOT whitelist progress — such a round records `green+no-progress` unless another action qualifies, so the circuit breaker caps proposal-only streaks at 3.
+2. The proposal is recorded in `docs/epics.md` (created on first proposal; template ships with the skill): type (`refactor` / `innovate`), trigger + evidence, hypothesis (the structural cause the symptoms suggest), implementation sketch (scope boundary, impacted modules, verification strategy, rollback, estimated round count once decomposed), `status: proposed`. The round line notes `epic(EP-<n> proposed)`.
+3. **Review gate — rounds NEVER execute epics.** Status flips `proposed → approved | rejected` only by the user. The run summary and the log header must surface pending proposals at run end — the proposal is an output of the iteration, not an action taken.
+4. Approved epics leave the loop and run their own spec→plan flow; once a plan decomposes an epic into independently-verifiable slices, those slices may re-enter the Tier 4 backlog as a coordinated sequence.
+5. The retrospective re-checks open proposals like lessons — stale or contradicted ones are rewritten or dropped; the register must not rot.
+
 ## Per-round loop (strict order)
 
 1. **Pick a target**: next item from the pool by tier priority 1→4 (pointer lives in the `docs/evolve-log.md` header).
 2. **Visual review** (UI targets with screenshot capability only): delegate the haiku subagent, prompt template: "This is a screenshot of <area> of <project>. List visual/interaction problems: broken layout, overflow, occlusion, insufficient contrast, scaling anomalies, abnormal spacing, missing copy — ordered by severity. If there are none, answer 'clean'." Every finding must be re-verified before acting (R1: ~15% hallucinated findings — cross-check the source, re-screenshot, or re-run tests).
 3. **Code review** — scope by module size (cost guard): small module (≤ ~2000 lines) → read the target sources and tests in full; large module → read the files named by the target and their tests first, expand outward only when findings demand it. Focus = the project CLAUDE.md convention checklist + generic checks (error handling, concurrency/lock boundaries, resource leaks, dead code, hardcoding, performance).
 4. **Act** (1–3 items this round, by priority): fix bugs (confirmed review findings first) → optimize existing features → pick a backlog extension that fits in one round.
-5. **Verify**: run the commands declared in the evolve-log header; all green or the round doesn't count; re-screenshot UI changes. If the same action fails verify 3 times in a row, stop grinding — discard or revert the uncommitted work, record `result(red)` with the failure evidence, and end the round; the next round picks a different target.
+5. **Verify**: run the commands declared in the evolve-log header; all green or the round doesn't count; re-screenshot UI changes. If the same action fails verify 3 times in a row, stop grinding — discard or revert the uncommitted work, record `result(red)` with the failure evidence, and end the round; the next round picks a different target — a target that keeps resisting round-sized work is an **Epic escalation** candidate (see the trigger standard).
 6. **Commit**: follow the project's commit conventions (conventional commits etc.); subject `evolve #<round>: <one sentence>`; body lists findings and fixes. **Do not push** (unless the user explicitly asks).
 7. **Record**: append one structured line to `docs/evolve-log.md`, advance the header pointer to the next round, and update the header metric counters (findings / fixes / regressions) — count from the round's review notes, and keep the header counters equal to the sum of the round lines (E4):
    `#<round> | <target> | findings(<n>) | actions(<n>) | result(green+progress|green+no-progress|red|blocked|interrupted, <test count>) | diff(<lines>) | <notes>`

@@ -118,9 +118,20 @@ for readme in (readme_en, readme_zh):
     for target in re.findall(r"\]\((?!https?://|#)([^)#]+)", readme.read_text(encoding="utf-8")):
         check(f"link resolves: {target} ({readme.name})", (ROOT / target).exists())
 
-for tpl in ("evolve-log.md", "lessons.md", "evolve-report.md"):
+for tpl in ("evolve-log.md", "lessons.md", "evolve-report.md", "epics.md"):
     check(f"template exists: docs/templates/{tpl}",
           (ROOT / "docs" / "templates" / tpl).exists())
+
+# Epic escalation: rounds graduate targets they demonstrably cannot close
+# into docs/epics.md proposals and NEVER execute them (user review gate).
+# Wiring checks — prose rules cannot be executed (E8), so pin the wiring.
+check("SKILL.md defines the Epic escalation standard with its review gate",
+      "## Epic escalation" in skill and "docs/epics.md" in skill
+      and "NEVER execute epics" in skill
+      and "(f)" in skill)
+check("READMEs surface the epic review gate",
+      "docs/epics.md" in readme_en.read_text(encoding="utf-8")
+      and "docs/epics.md" in readme_zh.read_text(encoding="utf-8"))
 
 # The evolve-log template must teach the CURRENT result vocabulary — a
 # template still showing the legacy 'result(green|red, ...)' form breeds
