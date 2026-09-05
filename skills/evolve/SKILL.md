@@ -11,7 +11,7 @@ The loop is staffed as a senior engineering team. "Senior" means accountability,
 
 | Role | Step / mechanism | Executor & permissions |
 |---|---|---|
-| Tech Lead | pick target, pool priority & refresh, convergence calls, diff-cap scope control | the session |
+| Tech Lead | pick target, pool priority & refresh, convergence calls, epic graduation calls, diff-cap scope control | the session |
 | Senior UX Quality Engineer | visual review (UI targets with a screenshot mechanism only): broken layout, overflow, contrast, scaling anomalies | haiku subagent, Read/Bash only (R2), returns an issue list only |
 | Senior Code Reviewer | code review: project conventions + generic defect classes | the session |
 | Senior Developer — sole writer | fix bugs / optimize / extend (1–3 items per round) | the session — never delegated to subagents (single writer per tree, E9) |

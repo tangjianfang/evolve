@@ -16,7 +16,7 @@ Each round is a strict seven-step loop, run by a senior engineering team — the
 
 | Role | Executor | Responsibility (mechanism) |
 |---|---|---|
-| Tech Lead | the session | target selection, pool priority & refresh, convergence calls, diff-cap scope control |
+| Tech Lead | the session | target selection, pool priority & refresh, convergence calls, epic graduation calls, diff-cap scope control |
 | Senior UX Quality Engineer | haiku subagent · read-only · returns an issue list only | visual review (UI targets with screenshots only): layout, overflow, contrast, scaling |
 | Senior Code Reviewer | the session | code review: project conventions + generic defect classes |
 | Senior Developer — sole writer | the session (never delegated) | fixes, optimizations, small extensions |
@@ -73,15 +73,25 @@ Step 0 · every session reads: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/
   4. act            1–3 items per round: fix bugs → optimize → small extension
       ↓
   5. verify         run the verify command locked in the log header —
-      │             all green or the round doesn't count (red / blocked)
+      │             all green or the round doesn't count (red / blocked);
+      │             3 consecutive reds on one action → end the round, no grinding
       ↓
   6. commit         "evolve #i: …" standalone commit; never auto-pushed
+      │             (unless explicitly authorized)
       ↓
   7. record         one structured line appended to the log; pointer and
       │             counters updated (header counters ≡ sum of round lines)
       │
-      └─→ i < N: back to 1  (every 10 rounds: checkpoint + pool refresh,
-      hand off to a fresh session resuming from the pointer)
+      ├─→ i < N: back to 1  (every 10 rounds: checkpoint + pool refresh,
+      │                 hand off to a fresh session resuming from the pointer)
+      │
+      └─→ target hits the epic-escalation standard (a–f)?
+                         ──► proposal written to docs/epics.md (consumes a
+                              round action; proposing alone ≠ progress — the
+                              breaker caps streaks); surfaces at run end →
+                              user review → approved runs its own spec→plan,
+                              never a round; decomposed slices may re-enter
+                              the Tier 4 backlog
 ──────────────────────────────────────────────────────────
   │
   ▼
@@ -89,6 +99,7 @@ Termination: N rounds done / early convergence / breaker / user stop
   → the final round is always the retrospective:
   replay audit (git snapshot replay, strike gamed rounds)
   → lessons update (verified+1 / rewrite / delete — the library must not rot)
+  → epics register re-check (rewrite / drop stale proposals)
   → process improvement (a pit already covered by a lesson → revise SKILL.md)
   → crystallization (≥3 same-theme lessons + ≥5 verifications → named mechanism)
   → summary report (≥20 rounds → docs/evolve-report.md; small runs → log block)

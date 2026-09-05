@@ -1,4 +1,4 @@
-# Epics — &lt;project&gt;
+# Epics — <project name>
 
 Escalated innovation/refactor proposals. Rounds NEVER execute epics — entries exist so the user can review before anything runs. Retrospectives re-check open entries: stale or contradicted proposals are rewritten or dropped, like lessons.
 

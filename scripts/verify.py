@@ -366,6 +366,20 @@ check("round lines in evolve-log match header 'rounds done'",
       bool(done_m) and len(round_lines) == int(done_m.group(1)),
       f"{len(round_lines)} round lines vs rounds done {done_m.group(1) if done_m else '—'}")
 
+# The epics register template must carry the review gate and the family
+# placeholder convention — a template teaching `&lt;`-escaped placeholders,
+# or missing the never-execute gate, breeds copies that drift from the
+# protocol (the other data-file templates get their vocabulary pinned the
+# same way).
+tpl_epics = (ROOT / "docs" / "templates" / "epics.md").read_text(encoding="utf-8")
+check("epics template pins the review gate + family placeholder convention",
+      "NEVER execute epics" in tpl_epics
+      and "proposed|approved|rejected|done" in tpl_epics
+      and "<project name>" in tpl_epics
+      and "&lt;" not in tpl_epics
+      and "only by user review" in tpl_epics
+      and "At most one new proposal per round" in tpl_epics)
+
 # --- lessons library ---------------------------------------------------------
 # The retrospective step re-checks every lesson and bumps `verified`
 # counters; a row whose verified column drifts out of integer format (or a
