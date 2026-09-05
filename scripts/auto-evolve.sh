@@ -19,8 +19,9 @@
 # - Auto-push happens only if the project's evolve-log header declares
 #   `push: auto-authorized`; otherwise rounds commit without pushing.
 # - Stops early on: 3 consecutive no-progress rounds (circuit breaker),
-#   3 consecutive failed `claude -p` sessions, or `status: converged` in
-#   the log header.
+#   3 consecutive failed `claude -p` sessions, `status: converged`, or
+#   `status: pending-epics` (every remaining target parked awaiting an
+#   epic decision) in the log header.
 
 set -euo pipefail
 

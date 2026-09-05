@@ -52,7 +52,8 @@ evolve 在任何项目上执行 N 轮小而完整的闭环迭代：
   └── 全自动模式 ── scripts/auto-evolve.sh 驱动器
         每轮 spawn 一个 headless 会话, 提示词带 "round i of N"
         (不说位置 → 末轮复盘必漏, 实测踩过)
-        熔断 scripts/breaker.sh: 连续 3 轮无进步 或 连续 3 个会话失败 → 停
+        熔断 scripts/breaker.sh: 连续 3 轮无进步 或 连续 3 个会话失败 → 停;
+        头部 status: converged / pending-epics 亦是停机通道
   │
   ▼
 Step 0 · 每会话必读: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/evolve-log.md
@@ -91,7 +92,7 @@ Step 0 · 每会话必读: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/evol
 ──────────────────────────────────────────────────────────
   │
   ▼
-终止: N 轮跑完 / 提前收敛 / 熔断 / 用户叫停  →  最后一轮固定 = 复盘轮
+终止: N 轮跑完 / 提前收敛 / 熔断 / 史诗待决 / 用户叫停  →  最后一轮固定 = 复盘轮
   回放审计 (git 快照重放, 剔除 gamed 轮)
   → lessons 更新 (verified+1 / 改写 / 删 — 教训库不许烂)
   → epics 登记复查 (改写/删除过时提案)
@@ -180,7 +181,7 @@ evolve 30 次
 scripts/auto-evolve.sh /path/to/project 50
 ```
 
-前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。成本随 N 线性增长——大 N 长跑前先用小 N（如 5 轮）试跑，确认画像与权限都通，再放量。白名单规则前缀必须匹配会话的 shell 工具——`Bash(...)` 规则不覆盖 PowerShell 会话（Windows 默认），需为 verify 命令和 git 平行添加 `PowerShell(...)` 规则，且 verify 需以单条命令调用（链式 `a && b` 无法通过静态校验）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步或连续 3 次会话失败自动熔断。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。
+前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。成本随 N 线性增长——大 N 长跑前先用小 N（如 5 轮）试跑，确认画像与权限都通，再放量。白名单规则前缀必须匹配会话的 shell 工具——`Bash(...)` 规则不覆盖 PowerShell 会话（Windows 默认），需为 verify 命令和 git 平行添加 `PowerShell(...)` 规则，且 verify 需以单条命令调用（链式 `a && b` 无法通过静态校验）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步或连续 3 次会话失败自动熔断；`status: pending-epics`（全部剩余目标停摆等待史诗决策）同样停机。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。
 
 ## 许可证
 

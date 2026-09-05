@@ -51,7 +51,8 @@ Input: "iterate N times" / "/evolve N"   (unspecified → N = 5)
         one headless session per round, prompt states "round i of N"
         (without the position, the final-round retrospective silently
         never happens — proved live); circuit breaker scripts/breaker.sh:
-        3 consecutive no-progress rounds / 3 failed sessions → stop
+        3 consecutive no-progress rounds / 3 failed sessions → stop;
+        header status: converged / pending-epics are stop channels too
   │
   ▼
 Step 0 · every session reads: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/evolve-log.md
@@ -95,8 +96,8 @@ Step 0 · every session reads: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/
 ──────────────────────────────────────────────────────────
   │
   ▼
-Termination: N rounds done / early convergence / breaker / user stop
-  → the final round is always the retrospective:
+Termination: N rounds done / early convergence / breaker / epics pending /
+  user stop → the final round is always the retrospective:
   replay audit (git snapshot replay, strike gamed rounds)
   → lessons update (verified+1 / rewrite / delete — the library must not rot)
   → epics register re-check (rewrite / drop stale proposals)
@@ -186,7 +187,7 @@ Unspecified, it defaults to 5 rounds. You can stop at any point — state lives 
 scripts/auto-evolve.sh /path/to/project 50
 ```
 
-Prerequisites: one interactive round first (profiling), and either a permissions allow-list in the project's `.claude/settings.local.json` or `--danger` on a trusted project. Cost scales linearly with N — pilot with a small N (e.g. 5) to validate profiling and permissions before launching long runs. Allow-list rule prefixes must match the session's shell tool — `Bash(...)` rules do not cover a PowerShell session (Windows default), so add parallel `PowerShell(...)` rules for the verify command and git, and invoke verify as a single command (chained `a && b` fails static validation). Every round must earn `green+progress` through the whitelist — new tests, red-then-green fixes, measured improvements, or inspector-confirmed fixes; 3 consecutive no-progress rounds — or 3 consecutive failed sessions — stop the run. Auto-push only when the project's log header declares `push: auto-authorized`.
+Prerequisites: one interactive round first (profiling), and either a permissions allow-list in the project's `.claude/settings.local.json` or `--danger` on a trusted project. Cost scales linearly with N — pilot with a small N (e.g. 5) to validate profiling and permissions before launching long runs. Allow-list rule prefixes must match the session's shell tool — `Bash(...)` rules do not cover a PowerShell session (Windows default), so add parallel `PowerShell(...)` rules for the verify command and git, and invoke verify as a single command (chained `a && b` fails static validation). Every round must earn `green+progress` through the whitelist — new tests, red-then-green fixes, measured improvements, or inspector-confirmed fixes; 3 consecutive no-progress rounds — or 3 consecutive failed sessions — stop the run, as does a `status: pending-epics` header (every remaining target parked awaiting an epic decision). Auto-push only when the project's log header declares `push: auto-authorized`.
 
 ## License
 

@@ -92,7 +92,7 @@ Rounds are deliberately small (fix → optimize → extend). When round-sized wo
 4. **Act** (1–3 items this round, by priority): fix bugs (confirmed review findings first) → optimize existing features → pick a backlog extension that fits in one round.
 5. **Verify**: run the commands declared in the evolve-log header; all green or the round doesn't count; re-screenshot UI changes. If the same action fails verify 3 times in a row, stop grinding — discard or revert the uncommitted work, record `result(red)` with the failure evidence, and end the round; the next round picks a different target — a target that keeps resisting round-sized work is an **Epic escalation** candidate (see the trigger standard).
 6. **Commit**: follow the project's commit conventions (conventional commits etc.); subject `evolve #<round>: <one sentence>`; body lists findings and fixes. **Do not push** (unless the user explicitly asks).
-7. **Record**: append one structured line to `docs/evolve-log.md`, advance the header pointer to the next round, update the header metric counters (findings / fixes / regressions) — count from the round's review notes, and keep the header counters equal to the sum of the round lines (E4) — and keep the header's `- epics pending:` line current (ids or none):
+7. **Record**: append one structured line to `docs/evolve-log.md`, advance the header pointer to the next round, update the header metric counters (findings / fixes / regressions) — count from the round's review notes, and keep the header counters equal to the sum of the round lines (E4) — keep the header's `- epics pending:` line current (ids or none), and own the header `- status:` line: `active` while the run continues, the terminating state (`converged` / `pending-epics`) when it ends, reset to `active` when a later run resumes (the breaker stops on terminating states — a stale one caps the new run at one round):
    `#<round> | <target> | findings(<n>) | actions(<n>) | result(green+progress|green+no-progress|red|blocked|interrupted, <test count>) | diff(<lines>) | <notes>`
    If an issue or KNOWN_ISSUES entry was fixed, update the corresponding doc in the same commit.
 
@@ -112,7 +112,7 @@ Fully automated runs: the user launches `scripts/auto-evolve.sh <project> <N>` (
 1. **One round per session** — each headless session runs exactly one round and exits; the driver owns rounds 1..N, and Step 0's pointer makes every session resume cleanly. Context is always fresh: the compaction problem disappears by construction. The driver's prompt states each session's position (`round i of N`) and flags round N as the retrospective — sessions cannot infer this from the log alone (T1g, proved live: a run's final round silently did a normal round instead).
 2. **Auto-push** — if the evolve-log header declares `- push: auto-authorized`, step 6 commits AND pushes. Without that declaration the no-push red line stands.
 3. **No user prompts** — profiling defines verification commands itself and records them as self-defined (E3); destructive operations are outright forbidden in autonomous mode (no confirmation is possible) — if a round would need one, log `result(blocked)` and pick the next target.
-4. **Circuit breaker** — 3 consecutive `no-progress` rounds → stop and report "converged or needs human input". Never manufacture progress to keep the loop alive.
+4. **Circuit breaker** — 3 consecutive `no-progress` rounds → stop and report "converged or needs human input". The breaker also stops on the header channels `- status: converged` and `- status: pending-epics` (all targets parked awaiting epic decisions). Never manufacture progress to keep the loop alive.
 5. **Single writer per tree** — one driver (and no parallel manual session) per project working tree. If a session observes repo state changing beneath it mid-round — files rewritten between its own reads, commits or pushes it did not make — it must stop editing immediately, re-read the log header, and either yield (log `result(blocked)` citing the foreign commit) or re-scope its round on top of the new state; never keep editing from a stale snapshot (live collision 2026-09-05: two concurrent retrospective sessions, one yielded and re-scoped as the next round).
 
 ## Anti-gaming rules (objective anchors, every round)
@@ -136,8 +136,8 @@ Rules:
 ## Convergence & termination
 
 - A target that is clean for 2 consecutive rounds leaves the pool for 10 rounds.
-- 3 consecutive all-clean pool rounds with an empty backlog → terminate early and report "project converged". "Clean" must be backed by data — 0 findings and 0 regressions in those rounds — not by impression.
-- A pool with no unparked target (everything done or awaiting an epic decision) → terminate early and report "pending epic decisions" — the run cannot proceed without the user; blocked rounds must not be manufactured to fill the gap.
+- 3 consecutive all-clean pool rounds with an empty backlog → terminate early, report "project converged", and set the header `- status: converged` (a breaker stop channel). "Clean" must be backed by data — 0 findings and 0 regressions in those rounds — not by impression.
+- A pool with no unparked target (everything done or awaiting an epic decision) → terminate early and report "pending epic decisions" — the run cannot proceed without the user; blocked rounds must not be manufactured to fill the gap. Set the header `- status: pending-epics` so the autonomous driver's breaker stops launching sessions (a resumed run resets it to active).
 - Every round is an independent commit; stop anytime; a resuming run continues from the log header pointer.
 - New user instructions take priority; finish them, then return to the loop.
 

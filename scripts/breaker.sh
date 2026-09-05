@@ -43,6 +43,14 @@ should_stop() {
     breaker_reason="converged"
     return 0
   fi
+  # T1h (#18): the all-parked termination is session-side only unless the
+  # breaker can see it — the session sets `- status: pending-epics` when it
+  # ends a run because every remaining target is parked awaiting an epic
+  # decision; without this channel the driver burns empty sessions up to N.
+  if grep -q "^- status: pending-epics" "$log"; then
+    breaker_reason="pending-epics"
+    return 0
+  fi
   return 1
 }
 

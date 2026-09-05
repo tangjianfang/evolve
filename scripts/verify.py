@@ -319,6 +319,19 @@ if bash_bin:
         ("fires on a converged header that carries a suffix note",
          fixture_log([PR, PR, PR], status="converged — all targets clean"),
          0, "converged"),
+        # T1h (#18 pass-2 residual): the session-side all-parked termination
+        # exists, but the driver must stop launching sessions too — the
+        # header declares the state; the breaker reads it (converged's twin).
+        ("fires on a pending-epics header even when rounds are healthy",
+         fixture_log([PR, PR, PR], status="pending-epics"), 0, "pending-epics"),
+        ("fires on a pending-epics header that carries a suffix note",
+         fixture_log([PR, PR, PR], status="pending-epics — EP-1/EP-2 await review"),
+         0, "pending-epics"),
+        ("does not fire on 'pending-epics' quoted in a round note while the header is active",
+         fixture_log([PR, PR],
+                     note="all parked; next session sets status: pending-epics"), 1, ""),
+        ("does not fire on an ACTIVE status whose suffix mentions pending-epics",
+         fixture_log([PR, PR, PR], status="active — pending-epics watch continues"), 1, ""),
     ]
     for name, text, want_rc, want_reason in CASES:
         rc, reason = breaker_probe(text)
