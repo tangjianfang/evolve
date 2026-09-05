@@ -5,10 +5,23 @@ description: Self-iterating evolution for any project — N rounds, each = visua
 
 # Evolution Protocol (Generic)
 
-Treat the current project as a continuously self-improving system. Each round is one small, complete loop: **find a problem → solve it → verify → commit → record**. Two roles collaborate:
+Treat the current project as a continuously self-improving system. Each round is one small, complete loop: **find a problem → solve it → verify → commit → record**.
 
-- **Visual Reviewer (haiku)**: screenshot analysis — broken layout, overflow, contrast, scaling anomalies. Delegated via the `Agent` tool with `model: haiku` and Read/Bash permissions (R2); returns an issue list only. Runs only when the target is UI and the project has a screenshot mechanism; otherwise skip this step and weight code review heavier.
-- **Logic Engineer (main model)**: code review, bug fixes, new features, verification, commits — executed by the current session, never delegated to subagents.
+The loop is staffed as a senior engineering team. "Senior" means accountability, not model tier: execution stays tiered — exactly one writable context (the session), plus read-only subagents delegated where independence or cost matters.
+
+| Role | Step / mechanism | Executor & permissions |
+|---|---|---|
+| Tech Lead | pick target, pool priority & refresh, convergence calls, diff-cap scope control | the session |
+| Senior UX Quality Engineer | visual review (UI targets with a screenshot mechanism only): broken layout, overflow, contrast, scaling anomalies | haiku subagent, Read/Bash only (R2), returns an issue list only |
+| Senior Code Reviewer | code review: project conventions + generic defect classes | the session |
+| Senior Developer — sole writer | fix bugs / optimize / extend (1–3 items per round) | the session — never delegated to subagents (single writer per tree, E9) |
+| Senior QA Engineer | red-then-green tests, baseline only grows, runs the locked verify command | the session |
+| Principal Inspector (adversarial) | refutes every claimed fix: receives the bug description + tests, never the fix | independent subagent (context isolation is the independence, not the model tier) |
+| Release Manager | one revertible commit per round, `evolve #<round>:` convention, never auto-push | the session |
+| Knowledge Steward | round records, lessons library, crystallization | the session |
+| SRE on call | circuit breaker, metrics counters, checkpoints, replay audit | scripts (`auto-evolve.sh` + `breaker.sh`), unattended |
+
+Two mechanics in the table are load-bearing. The UX review is delegated via the `Agent` tool with `model: haiku` and Read/Bash permissions (R2) and runs only when the target is UI and the project has a screenshot mechanism — otherwise the step is skipped and code review is weighted heavier. Every writing role is executed by the current session, never delegated: one writer per tree (E9), with delegated eyes reserved for the two spots where they pay — cheap eyes (UX walk) and independent eyes (inspection).
 
 ## Input
 

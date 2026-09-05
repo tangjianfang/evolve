@@ -12,12 +12,19 @@ It was generalized from a real-world run of **181 consecutive iteration rounds**
 
 ## How it works
 
-Each round is a strict seven-step loop, driven by two collaborating roles:
+Each round is a strict seven-step loop, run by a senior engineering team — the roles are senior, the execution is tiered (exactly one writable session plus read-only subagents where independence or cost pays):
 
-| Role | Who | Does what |
+| Role | Executor | Responsibility (mechanism) |
 |---|---|---|
-| Visual Reviewer | haiku subagent (UI targets only) | Screenshot analysis: broken layout, overflow, contrast, scaling issues |
-| Logic Engineer | the main model (your session) | Code review, bug fixes, new features, verification, commits |
+| Tech Lead | the session | target selection, pool priority & refresh, convergence calls, diff-cap scope control |
+| Senior UX Quality Engineer | haiku subagent · read-only · returns an issue list only | visual review (UI targets with screenshots only): layout, overflow, contrast, scaling |
+| Senior Code Reviewer | the session | code review: project conventions + generic defect classes |
+| Senior Developer — sole writer | the session (never delegated) | fixes, optimizations, small extensions |
+| Senior QA Engineer | the session | red-then-green tests, baseline only grows, runs the locked verify command |
+| Principal Inspector (adversarial) | independent subagent · sees the bug + tests, never the fix | refutes every claimed fix |
+| Release Manager | the session | one revertible commit per round, never auto-pushes |
+| Knowledge Steward | the session | round records, lessons library, crystallization |
+| SRE on call | scripts (`auto-evolve.sh` + `breaker.sh`), unattended | circuit breaker, metrics, checkpoints, replay audit |
 
 1. **Pick a target** from a 4-tier priority pool (known issues → test gaps → module rotation → backlog); the pool is re-scanned every 10 rounds so it never iterates against a stale map
 2. **Visual review** — delegated to a haiku subagent; findings are cross-checked before acting (≈15% hallucinated findings in practice)

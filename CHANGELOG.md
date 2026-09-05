@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lessons E8 (execute behavior against fixtures — substring probes pass behavior-flipping mutants) and E9 (single writer per tree + the yield procedure on mid-round foreign changes); SKILL.md Autonomous mode amended accordingly (driver states run position; single-writer rule).
 - Lesson E10: installation/usage docs rot invisibly until someone follows them verbatim — #15's install-instruction defect had shipped with the templates since they landed in #2, and only a live install exposed it. Audit by executing the README path once in a clean target; guard standing with a line-anchored wiring check.
 
+### Changed
+
+- Role model rewritten as a nine-role senior engineering team (both READMEs + SKILL.md): the old two-role table (Visual Reviewer / Logic Engineer) under-documented roles the protocol already contained — the adversarial inspector, the driver/breaker on-call, the retrospective knowledge steward are now explicit. "Senior" means accountability, not model tier: execution stays tiered (one writable session; delegated read-only eyes only where cheap-eyes or independent-eyes pay). All mechanics unchanged — R2 haiku delegation, issue-list-only returns, UI gating, and the never-delegate-writing rule are preserved verbatim.
+
 ### Fixed
 
 - READMEs' manual-install instruction copied only `SKILL.md`, omitting the `docs/templates/` starter templates that first-run profiling expects next to it — a verbatim manual install was silently degraded (observed live during a real install). Both install lines now cover the templates (#15).
