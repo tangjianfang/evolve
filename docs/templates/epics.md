@@ -6,6 +6,7 @@ Entry template (one block per proposal):
 
 ```markdown
 ## EP-<n> | type: refactor|innovate | status: proposed|approved|rejected|done
+- target: <the pool entry / module this epic parks>
 - trigger: (a)–(f) with evidence (round #s / log lines)
 - hypothesis: the structural cause the symptoms suggest
 - implementation sketch: scope boundary, impacted modules, verification
@@ -16,5 +17,5 @@ Entry template (one block per proposal):
 Rules (mirrors SKILL.md "Epic escalation"):
 
 1. `status` flips `proposed → approved | rejected` only by user review — never by a round.
-2. At most one new proposal per round, one open proposal per target.
+2. At most one new proposal per round, one open proposal per target. A target with an open proposal leaves the pool until the proposal is decided; rejection returns it.
 3. Approved epics run their own spec→plan flow; decomposed, independently-verifiable slices may re-enter the Tier 4 backlog as a coordinated sequence.

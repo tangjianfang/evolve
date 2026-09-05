@@ -4,6 +4,9 @@
 <!-- optional — declare only to authorize auto-push in autonomous runs:
 - push: auto-authorized
 -->
+<!-- optional — present from the first epic proposal on, kept current every round:
+- epics pending: <EP-ids or none>
+-->
 - pointer: #1 (next round)
 - rounds done: 0
 - status: initialized

@@ -140,7 +140,8 @@ tpl_log = (ROOT / "docs" / "templates" / "evolve-log.md").read_text(encoding="ut
 check("evolve-log template shows the anti-gaming result vocabulary",
       "green+progress" in tpl_log and "green+no-progress" in tpl_log
       and "blocked" in tpl_log and "interrupted" in tpl_log
-      and "result(green|" not in tpl_log)
+      and "result(green|" not in tpl_log
+      and "epics pending" in tpl_log)
 
 # A manual install that follows the READMEs verbatim ships only SKILL.md, but
 # SKILL.md's profiling step expects the starter templates to sit next to it
@@ -354,6 +355,17 @@ check("driver tells each session its run position (final round → retrospective
 check("driver validates <rounds> as a positive integer",
       'if ! [[ "$N" =~ ' in driver and "[1-9][0-9]*$" in driver
       and "N=${2-5}" in driver)
+
+# The driver's per-round prompt must remind sessions of the FULL result
+# vocabulary — it listed 4 of 5 states (interrupted missing) while SKILL.md
+# and the breaker parse all five; a session choosing from a 4-state list
+# will mislabel an interrupted round (drift found in #18). Anchored to the
+# prompt's own span ("result one of: … Then stop") so a comment planting
+# the bare string, or a bogus sixth state appended, both fail (inspector
+# evasions E1/E2).
+check("driver prompt states the full five-state result vocabulary",
+      "result one of: green+progress / green+no-progress / red / blocked"
+      " / interrupted. Then stop" in driver)
 
 # The round-line pattern must actually work on the real log: it has to select
 # exactly as many lines as the header's 'rounds done' counter claims (also

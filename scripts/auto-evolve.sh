@@ -74,7 +74,7 @@ for ((i = 1; i <= N; i++)); do
   # may have appended its line before dying), and abort only on 3
   # consecutive failed sessions — mirroring the no-progress breaker.
   if (cd "$PROJECT" && claude -p "${PERMS[@]}" \
-    "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). $POSITION Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked. Then stop — do not start another round."); then
+    "Run exactly ONE round of the evolve protocol in autonomous mode. First read the protocol itself: skills/evolve/SKILL.md inside this project if it exists, otherwise ~/.claude/skills/evolve/skills/evolve/SKILL.md (do not invoke a skill named 'evolve' — a different plugin may own that name; read the file directly). $POSITION Step 0 first: read docs/evolve-log.md and follow its header pointer. Anti-gaming rules and the progress whitelist apply. End by appending the round's structured log line with result one of: green+progress / green+no-progress / red / blocked / interrupted. Then stop — do not start another round."); then
     consecutive_failures=0
   else
     rc=$?
