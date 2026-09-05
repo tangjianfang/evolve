@@ -471,6 +471,26 @@ check("SKILL.md Step 0 wires the drift notice (present-when, never self-update, 
       and "never self-update" in step0_span
       and "silent" in step0_span)
 
+# --- seed lessons in the shipped template ------------------------------------
+# Meta-Policy Reflexion's lesson: reflective memory is most valuable when it
+# is reusable ACROSS tasks (Voyager ships a starter skill library for the same
+# reason). New adopters of this skill started with an empty lessons library,
+# re-deriving what the evolve project already paid for; the template now
+# carries generic seed rows (S-ids, so a project's own E-numbering never
+# collides) whose first retrospective deletes whatever does not apply — the
+# library-rot rule already owns their lifecycle (E11 clean).
+tpl_lessons = (ROOT / "docs" / "templates" / "lessons.md").read_text(encoding="utf-8")
+seed_rows = [l for l in tpl_lessons.splitlines() if re.match(r"^\| S\d+ \|", l)]
+check("lessons template ships 5 seed rows with integer verified counters",
+      len(seed_rows) == 5
+      and all(re.search(r"\|\s*\d+\s*\|\s*$", l) for l in seed_rows)
+      and "first retrospective" in tpl_lessons
+      and "delete" in tpl_lessons,
+      f"{len(seed_rows)} seed rows")
+profiling_span = skill.split("## Project profiling", 1)[-1].split("## Pool refresh", 1)[0]
+check("SKILL.md profiling tells the copier about the seed entries",
+      "seed" in profiling_span.lower())
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")

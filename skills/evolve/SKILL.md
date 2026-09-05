@@ -37,7 +37,7 @@ Two mechanics in the table are load-bearing. The UX review is delegated via the 
 
 ## Project profiling (first run only)
 
-Starter templates for the project data files ship with this skill (`docs/templates/`, next to this SKILL.md in the installation) — copy them when present; the structures described below are authoritative.
+Starter templates for the project data files ship with this skill (`docs/templates/`, next to this SKILL.md in the installation) — copy them when present; the structures described below are authoritative. The lessons template carries **seed entries** distilled from the evolve project's own runs — copy them as-is; the project's first retrospective re-checks them like any entry (keep what applies, delete the rest).
 
 Generate the initial `docs/evolve-log.md`:
 
