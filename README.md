@@ -165,7 +165,7 @@ First run on a new project? evolve profiles it automatically: detects build/test
 /plugin install evolve@evolve-marketplace
 ```
 
-**Manual:** copy [`skills/evolve/SKILL.md`](skills/evolve/SKILL.md) to `~/.claude/skills/evolve/SKILL.md` (user-level) or `.claude/skills/evolve/SKILL.md` (project-level), plus [`docs/templates/`](docs/templates) alongside it (as `docs/templates/`) — first-run profiling copies these starters when present.
+**Manual:** copy [`skills/evolve/SKILL.md`](skills/evolve/SKILL.md) to `~/.claude/skills/evolve/SKILL.md` (user-level) or `.claude/skills/evolve/SKILL.md` (project-level), plus [`docs/templates/`](docs/templates) and [`scripts/`](scripts) alongside it (as `docs/templates/` and `scripts/`) — first-run profiling copies these starters when present, and `scripts/check-update.sh` powers the Step 0 protocol-drift notice.
 
 > **Name-collision note:** if the `everything-claude-code` plugin is installed, its own `evolve` skill may win the bare `/evolve` invocation. Prefer the natural-language trigger ("iterate 20 rounds" / "迭代 20 次" — description matching picks this skill) or disable the conflicting plugin.
 

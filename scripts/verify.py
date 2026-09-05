@@ -603,6 +603,34 @@ if upd.exists():
 check("check-update.sh version parser is inert to hostile manifests",
       version_of_ok)
 
+# --- portability & fetch hygiene ------------------------------------------------
+# core.autocrlf=true boxes materialize CRLF .sh files on a fresh clone and
+# bash chokes on $'\r' — pin LF for shell scripts via .gitattributes (the
+# repo already stores LF; only checkouts were at risk). The fetch cap: a
+# 50-round driver run fired 50 remote fetches (worst case 5s each) — the
+# notice now serves a 24h cache without touching the network (cache state is
+# script-private, E11-clean: no protocol reader depends on it).
+ga = (ROOT / ".gitattributes").read_text(encoding="utf-8") if (ROOT / ".gitattributes").exists() else ""
+check(".gitattributes pins shell scripts to LF",
+      "*.sh" in ga and "eol=lf" in ga)
+cache_ok = False
+if upd.exists():
+    with tempfile.NamedTemporaryFile("w", suffix=".cache", delete=False) as tf:
+        tf.write("9.9.9")
+        seeded = tf.name
+    try:
+        env = dict(os.environ, EVOLVE_CACHE_FILE=seeded,
+                   EVOLVE_VERSION_URL="http://127.0.0.1:1/manifest.json")
+        r = subprocess.run(["bash", str(upd)], capture_output=True, text=True, env=env)
+        cache_ok = r.returncode == 0 and "9.9.9 available" in r.stdout
+    finally:
+        os.unlink(seeded)
+check("check-update.sh serves a fresh cache without touching the network",
+      cache_ok)
+check("READMEs' manual-install covers scripts/ (drift-notice wiring)",
+      all("scripts/" in manual_install_line(r.read_text(encoding="utf-8"))
+          for r in (readme_en, readme_zh)))
+
 # --- regressions & rollback procedure ----------------------------------------
 # The header carried a `regressions` counter since round #1, but no step ever
 # owned its setter — an E11 orphan hiding in plain sight (red line says every

@@ -20,12 +20,20 @@
 #
 # Safety: 5s timeout, silent on any failure (offline = no output, exit 0).
 # Override the remote URL for tests via EVOLVE_VERSION_URL.
+#
+# Fetch cap: a successful fetch seeds a 24h cache (path overridable via
+# EVOLVE_CACHE_FILE for tests); while the cache is fresh the script serves
+# it without touching the network — a 50-round driver run must not pay 50
+# fetches. The cache is private state of this script alone: nothing else
+# reads it, staleness fails silent (E11-clean).
 
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$SCRIPT_DIR/../.claude-plugin/plugin.json"
 REMOTE_URL="${EVOLVE_VERSION_URL:-https://raw.githubusercontent.com/tangjianfang/evolve/main/.claude-plugin/plugin.json}"
+CACHE_FILE="${EVOLVE_CACHE_FILE:-${TMPDIR:-/tmp}/evolve-check-update.cache}"
+CACHE_TTL_MIN=1440
 
 version_of() {
     # first "version": "X.Y.Z" occurrence of a manifest-shaped text
@@ -57,13 +65,20 @@ case "${1-}" in
         version_of "$2"
         ;;
     "")
-        # remote first: a manifest we cannot read must not silence a drift notice
-        remote_manifest=$(curl -fsS -m 5 "$REMOTE_URL" 2>/dev/null) || remote_manifest=""
-        remote_version=$(printf '%s' "$remote_manifest" | version_of /dev/stdin) || remote_version=""
-        [ -n "$remote_version" ] || exit 0
         [ -f "$MANIFEST" ] || exit 0
         local_version=$(version_of "$MANIFEST")
         [ -n "$local_version" ] || exit 0
+        if [ -f "$CACHE_FILE" ] && [ -n "$(find "$CACHE_FILE" -mmin -"$CACHE_TTL_MIN" 2>/dev/null)" ]; then
+            remote_version=$(head -c 64 "$CACHE_FILE" 2>/dev/null)
+        else
+            # remote first: a manifest we cannot read must not silence a drift notice
+            remote_manifest=$(curl -fsS -m 5 "$REMOTE_URL" 2>/dev/null) || remote_manifest=""
+            remote_version=$(printf '%s' "$remote_manifest" | version_of /dev/stdin) || remote_version=""
+            if [ -n "$remote_version" ]; then
+                printf '%s' "$remote_version" > "$CACHE_FILE" 2>/dev/null || true
+            fi
+        fi
+        [ -n "$remote_version" ] || exit 0
         verdict=$(compare "$local_version" "$remote_version") || exit 0
         if [ "$verdict" = "newer" ]; then
             echo "evolve $local_version installed, $remote_version available — update via your plugin manager (the skill never self-updates)"
