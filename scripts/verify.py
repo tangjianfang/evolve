@@ -509,6 +509,19 @@ check("shipped protocol files carry no machine-specific absolute paths",
       not abs_path.search(skill) and not offenders,
       f"{offenders or ''}")
 
+# --- retrospective mutation self-audit ---------------------------------------
+# AlphaEvolve's bottleneck lesson: evaluator QUALITY, not count, drives
+# self-improvement. A suite that only grows row count may have gained zero
+# detection power, so the retrospective's replay audit must also
+# mutation-probe newly added checks (flip the guarded artifact, expect FAIL).
+# Wiring check: rule 5 must own the duty — a retrospective instruction with
+# no anchor rots exactly like every unwired protocol sentence before it (D7).
+rule5_span = skill.split("5. **Replay audit**", 1)[-1].split("6. The record's", 1)[0]
+check("replay audit owns the mutation self-audit of new checks",
+      "mutation-probe" in rule5_span
+      and "newly added checks" in rule5_span
+      and "detection power" in rule5_span)
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")

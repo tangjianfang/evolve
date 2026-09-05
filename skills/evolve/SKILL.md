@@ -132,7 +132,7 @@ Rules:
 2. **Novelty guard**: before committing, compare the round's target+action against the last 10 log lines; substantively repeating a prior round → discard and pick the next target.
 3. **Difficulty guard**: 2 consecutive trivial rounds (whitelist satisfied only by k < 2 new tests) → the next round must come from Tier 1.
 4. **Verification lock**: the verify command in the log header is read-only after profiling; changing it requires its own commit, flagged in the log.
-5. **Replay audit** (in the retrospective): sample 2 rounds whose progress claim was red-then-green or baseline-grew; check out each round's parent commit and confirm the round's new tests are absent-or-failing there and green on the round's commit. A round that fails replay is struck from the metrics and marked `gamed`.
+5. **Replay audit** (in the retrospective): sample 2 rounds whose progress claim was red-then-green or baseline-grew; check out each round's parent commit and confirm the round's new tests are absent-or-failing there and green on the round's commit. A round that fails replay is struck from the metrics and marked `gamed`. The audit also **mutation-probes 2 of the run's newly added checks** — flip or garble the guarded artifact, confirm the check fails, revert — because a suite that only grows row count may have gained no detection power (AlphaEvolve's bottleneck lesson: evaluator quality, not evaluator count, drives self-improvement); probes and outcomes go in the retrospective log line.
 6. The record's `result` field takes one of: `green+progress` / `green+no-progress` / `red` / `blocked` / `interrupted`.
 
 ## Convergence & termination
