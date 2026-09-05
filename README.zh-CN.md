@@ -61,7 +61,7 @@ evolve 的状态保存在你的项目里：
 /plugin install evolve@evolve-marketplace
 ```
 
-**手动安装：** 把 [`skills/evolve/SKILL.md`](skills/evolve/SKILL.md) 复制到 `~/.claude/skills/evolve/SKILL.md`（用户级）或项目的 `.claude/skills/evolve/SKILL.md`（项目级）。
+**手动安装：** 把 [`skills/evolve/SKILL.md`](skills/evolve/SKILL.md) 复制到 `~/.claude/skills/evolve/SKILL.md`（用户级）或项目的 `.claude/skills/evolve/SKILL.md`（项目级），并把 [`docs/templates/`](docs/templates) 一并复制到安装目录下的 `docs/templates/` —— 首次运行做项目画像时这些起始模板会派上用场。
 
 > **名称冲突提示：** 若同时安装了 `everything-claude-code` 插件，裸名 `/evolve` 可能被它的同名 skill 抢占。建议用自然语言触发（“迭代 20 次”——描述匹配会选中本 skill），或禁用冲突插件。
 

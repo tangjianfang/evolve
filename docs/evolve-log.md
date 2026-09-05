@@ -2,31 +2,24 @@
 
 - verify: `python scripts/verify.py` (created round #1; pre-creation baseline = both `.claude-plugin/*.json` parse)
 - push: auto-authorized (2026-09-05, for the first autonomous-run experiment)
-- pointer: #15 (next run resumes here)
-- rounds done: 14
-- status: active — #14 pinned T1g and recorded the 2026-09-05 concurrent-session collision (lesson E9 + SKILL.md single-writer rule); pool unchanged: only manual T1c and big-ticket backlog remain — next run should pool-refresh or declare converged
-- metrics: findings 35 | fixes 37 | regressions 0
+- pointer: #16 (next run resumes here)
+- rounds done: 15
+- status: active — #15 pool-refresh: Tier 3 fully rotated (README install section was the last gap, fixed in-round); pool now holds no round-sized targets (T1c manual-only; Tier 4 big-ticket: trigger-match eval set / ≥20-round external long-run / deferred I2–I4) → next run: retrospective, converged declaration, or operator-commissioned spec
+- metrics: findings 36 | fixes 38 | regressions 0
 
 ## Target pool
 
+(refreshed #15 — closed entries T1b/T1d/T1e/T1f/T1g, T4a/T4b/T4f, T3b/T3c/T3d dropped; their fix history lives in the round lines and CHANGELOG below)
+
 - Tier 1 (known defects):
-  - T1a skill name collision: bare `evolve` resolves to `everything-claude-code:evolve` when that plugin is installed — reproduced live 2026-09-05
-  - T1b zero automated verification (JSON / frontmatter / version consistency) — the "no eval" score deduction
-  - T1c install path never exercised: `/plugin marketplace add tangjianfang/evolve` untested in a clean environment
-  - T1d (refresh #8) SKILL.md retrospective output list has a duplicated item — numbering runs 1,2,3,4,3 with "**Summary report**" twice (lines ~114-115); introduced by #6's crystallization edit. Fix: drop the duplicate; add a verify.py ordered-list-numbering check (write it, watch it FAIL, fix, watch it pass — red-then-green) — closed #9
-  - T1e (refresh #8) auto-evolve.sh circuit breaker reads `tail -n 5` of the whole log file, but round lines are not the file tail (the Run-summary block follows the Rounds block in this repo's log), and any single no-progress match inside the window increments the streak — so "3 consecutive no-progress rounds" is not what it measures. Fix: select round lines (`^#[0-9]+ \|`) and require the last 3 to all be no-progress — closed #10
-  - T1f (refresh #8) autonomous sessions cannot execute the verify command when the project allow-list uses `Bash(...)` prefixes but the session's shell tool is PowerShell — `.claude/settings.local.json` allows `Bash(python:*)` yet `python` is denied, and spawned subagents have no Bash tool either. Fix: add `PowerShell(...)` rules to the allow-list (needs one manual approval — settings writes are protected) and document the requirement in auto-evolve.sh's header + README autonomous section — closed #9 (rules live in local untracked settings; requirement documented in all three)
-- Tier 2 (coverage gaps): zero checks — merged into T1b
-- Tier 3 (module rotation):
-  - T3a SKILL.md internal consistency after the English rewrite
-  - T3b bilingual README ↔ SKILL.md mechanism sync (+ metrics example line)
-  - T3c CHANGELOG ↔ actual content alignment
-  - T3d (refresh #8) rotation extended to scripts/auto-evolve.sh, scripts/verify.py, docs/lessons.md, docs/templates/* — closed #11 (verify.py counter-sum landed #10; auto-evolve.sh re-reviewed with 2 fixes in #11; templates + lessons rotated clean in #11, one template fix)
-- Tier 4 (backlog):
-  - T4a docs/templates/ starters (evolve-log / lessons / evolve-report)
-  - T4b GitHub Actions CI running the verification suite
-  - T4c (merged into T3b)
-  - T4f (found #11, inspector) verify.py assertions are substring-based — mutation probes passed 2/6 pre-tightening (4 killed on the spot); a behavioral harness that executes driver/breaker logic against fixture logs would close the class — closed #12 (stop rules extracted to scripts/breaker.sh, 24-fixture behavioral harness, 6 adversarial rounds; accepted residuals I2/I3/I4 all require wholesale result-syntax faking or template-violating lines, surviving mutants all fix-direction — re-open only with inspector round-6's three fixtures if the evasion vector ever matters)
+  - T1a skill name collision: bare `evolve` resolves to `everything-claude-code:evolve` when that plugin is installed — mitigated (disambiguation note in both READMEs, re-verified #15); environmental, not closable from inside the repo
+  - T1c install path never exercised: `/plugin marketplace add tangjianfang/evolve` + `/plugin install evolve@evolve-marketplace` untested in a clean environment — manual-only (needs a human in a clean env; do NOT test on a machine that already has a manual `~/.claude/skills/evolve/` install — it would register a duplicate skill source)
+- Tier 2 (coverage gaps): empty (merged into T1b, closed #1)
+- Tier 3 (module rotation — re-listed #15): SKILL.md, README.md, README.zh-CN.md, CHANGELOG.md, scripts/auto-evolve.sh, scripts/breaker.sh, scripts/verify.py, docs/templates/*, docs/lessons.md, .github/workflows/verify.yml — all rotated clean by #9–#15 (README install section was the last gap, fixed #15)
+- Tier 4 (backlog — big-ticket, spec→plan flow, not round-sized):
+  - trigger-match eval set: does the description actually win "iterate N times"-style prompts against competing skills
+  - ≥20-round external long-run validation of the v1.1–v1.3 mechanisms on a real project
+  - breaker residuals I2–I4 (#12) — deferred unless the evasion vector ever matters
 
 ## Rounds
 
@@ -44,6 +37,7 @@
 #12 | T4f behavioral harness | findings(8) | actions(6) | result(green+progress, 71 checks) | diff(~240) | stop rules extracted to scripts/breaker.sh (single source, driver sources it) + verify.py runs it against 24 fixture logs asserting the stop/continue decision + bash -n ×2 + wiring checks — baseline 40→71. SIX adversarial-inspection rounds: R1 4 surviving mutants (all closed on the spot), R5-6 shadow axis; final replay 15/15 mutants killed, every one by a behavioral check. 4 real bugs fixed red-then-green along the way, each watched FAIL then GREEN: E3 (notes quoting the vocabulary false-stopped healthy runs), F3 (verbatim pipe-quote ditto), G2 (free-form target containing ' | ' silently disabled the breaker), H2/H3 (result-syntax-mimicking target shadowed the real column — incl. deliberate anti-gaming evasion) — breaker now counts the FIRST field with a full 'result(<vocab>, ' shape, scanning from field 3 (awk; FS uses [|] — gawk degrades '\|' to single-space splitting, caught live). Final verdict REFUTED-narrowly: accepted residuals I2 (pipe-shifted full-shape fake segment can still shadow — defense-in-depth margin), I3 (legacy rows + full-shape note segment false-stop), I4 (template-violating no-target line missed, fail-safe), surviving mutants R1/R2/R3/Q1r/Q2r all fix-direction — all require wholesale syntax faking or template violations, recorded in pool note for a future round. CHANGELOG Unreleased backfilled (#9–#12). T4f closed; autonomous-executable pool now empty (T1c is manual-only) → next: retrospective or converged. verify command unchanged (lock respected)
 #13 | retrospective (operator-run — driver predates T1g, sessions couldn't know this was the final round) | findings(1) | actions(3) | result(green+no-progress, 71 checks — label corrected in #14: docs-only round, no whitelist credential; work real) | diff(~90) | T1g found and fixed (driver now passes run position + final-round retrospective instruction, c788c52); lessons E1–E4 verified +1 (confirmed by this run), new E6 (permission-layer blockers) + E7 (driver must pass run position); release 1.3.1
 #14 | T1g pin + concurrency cleanup (post-#13) | findings(6) | actions(4) | result(green+progress, 74 checks) | diff(~55) | ran CONCURRENTLY with the operator's #13 (one tree, two live round-sessions — mid-round foreign rewrites of lessons.md, foreign commit+push); yielded, waited for #13 to land, re-scoped on top (now codified: lesson E9 + SKILL.md single-writer rule). findings: T1g fix unpinned (no verify check — a behavior flip would pass 71/71); lessons library structurally unguarded; the concurrency hole itself; #13 result overstated (green+progress without a whitelist credential — corrected in place, label not the work); #13 round line sat outside the ## Rounds block (relocated); the run's biggest lesson (substring probes pass behavior-flipping mutants) absent from the library. actions: verify.py +3 — T1g wiring check (watched RED at the abd1647 snapshot as the ONLY failing check of 74, GREEN at HEAD) + lessons template & integer-verified checks, baseline 71→74 (k=3); lessons +E8 (behavioral over substring) +E9 (single writer per tree); SKILL.md autonomous mode amended (driver states run position — E7 now protocol text; single-writer yield procedure); log hygiene (#13 relocated+relabeled, header synced). this session also ran the retrospective's mandatory replay audit (none recorded in #13): #10 and #12 replayed via git-show snapshots — parents green at 34/40 with each round's new checks absent, round commits green at 37/71 — 2/2 clean, no gamed rounds. verify command unchanged (lock respected)
+#15 | pool-refresh + README install docs | findings(1) | actions(2) | result(green+progress, 77 checks) | diff(~25) | interactive round (first since #7); refresh triggered by header directive (last refresh #8, full pool sweep since). refresh: T1a mitigation re-verified in both READMEs (stays, environmental), closed entries dropped, Tier 3 re-listed (10 modules, rotated clean by #9–#14; CI workflow reviewed clean) — README install section the last gap. finding: manual-install copies only SKILL.md, omitting docs/templates/ that SKILL.md profiling expects next to it (D7 docs-lag — hit live installing this very skill earlier in the session, evidence: installer had to infer templates from SKILL.md text). fix: both READMEs' install lines + line-anchored verify check (watched RED 74/75 → GREEN 77/77; +2 link-resolution checks from the new README links); inspector CONFIRMED — 4/7 mutants caught incl. the historical shape and both one-sided regressions, fails closed on delete/reword; anchor tightened on the spot to exact `**Manual:**`/`**手动安装：**` prefix after the inspector's first-match-hijack mutant (e) (probe: decoy `**Manual updates:**` line now correctly skipped, mutant caught); accepted residuals: semantic negation + wrong-destination mention — prose wiring-check ceiling, both require rewriting the instruction to be wrong while still mentioning templates. whitelist: red-then-green, baseline 74→77 (k=3); verify command unchanged (lock respected)
 
 ## Run summary (2026-09-05, 5 rounds)
 

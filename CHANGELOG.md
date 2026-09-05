@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - verify.py: wiring check pinning the driver's run-position prompt (T1g — the fix shipped in 1.3.1 without a check; the new check was watched failing as the only red check on the pre-fix tree, then green), plus two structural checks on the lessons library (5-column template present, `verified` counters are integers). Suite: 71 → 74 checks.
+- verify.py: manual-install completeness check — both READMEs' install instruction line must cover `docs/templates/`, anchored to the exact `**Manual:**`/`**手动安装：**` prefix so a templates mention elsewhere in the README cannot mask an omission, and a future `**Manual …:**` line above it cannot capture the match (inspector mutant, tightened on the spot). Suite: 74 → 77 checks (the two extra are link-resolution checks on the new README links).
 - Lessons E8 (execute behavior against fixtures — substring probes pass behavior-flipping mutants) and E9 (single writer per tree + the yield procedure on mid-round foreign changes); SKILL.md Autonomous mode amended accordingly (driver states run position; single-writer rule).
 
 ### Fixed
 
+- READMEs' manual-install instruction copied only `SKILL.md`, omitting the `docs/templates/` starter templates that first-run profiling expects next to it — a verbatim manual install was silently degraded (observed live during a real install). Both install lines now cover the templates (#15).
 - evolve-log hygiene: round #13's line relocated into the Rounds block, and its `result` corrected `green+progress` → `green+no-progress` — a docs-only round carries no whitelist credential (the label overstated; the work itself was real, and the missing red-then-green credential for T1g is supplied above).
 
 ## [1.3.1] - 2026-09-05

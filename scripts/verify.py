@@ -131,6 +131,26 @@ check("evolve-log template shows the anti-gaming result vocabulary",
       and "blocked" in tpl_log and "interrupted" in tpl_log
       and "result(green|" not in tpl_log)
 
+# A manual install that follows the READMEs verbatim ships only SKILL.md, but
+# SKILL.md's profiling step expects the starter templates to sit next to it
+# ("copy them when present"). The install instruction must cover the
+# templates too — otherwise every README-guided manual install is silently
+# degraded (hit live 2026-09-05: the installer had to infer the templates
+# from SKILL.md's own text). Wiring check — an instruction cannot be executed;
+# anchored to the instruction line so a templates mention elsewhere in the
+# README (the profiling section) cannot mask it. The prefix includes the
+# colon: a future `**Manual <something>:**` line above the real install
+# instruction must not capture the first match (inspector mutant (e), #15).
+def manual_install_line(text):
+    for line in text.splitlines():
+        if line.startswith("**Manual:**") or line.startswith("**手动安装：**"):
+            return line
+    return ""
+
+check("READMEs' manual-install copies the starter templates, not just SKILL.md",
+      all("docs/templates" in manual_install_line(r.read_text(encoding="utf-8"))
+          for r in (readme_en, readme_zh)))
+
 check("CI workflow exists", (ROOT / ".github" / "workflows" / "verify.yml").exists())
 check("autonomous driver exists", (ROOT / "scripts" / "auto-evolve.sh").exists())
 
