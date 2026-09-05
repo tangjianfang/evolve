@@ -98,6 +98,15 @@ Rounds are deliberately small (fix → optimize → extend). When round-sized wo
    If an issue or KNOWN_ISSUES entry was fixed, update the corresponding doc in the same commit.
    **Mid-run lesson capture** (borrowed from NVIDIA cuOpt's cuopt-skill-evolution skill — mechanism, not architecture, E5): when the round itself surfaces a generalizable insight — thrash before landing, an inspector refutation, a workaround against an undocumented constraint, a protocol gap — append it to `docs/lessons.md` in the same commit with `verified 0` instead of holding it for the retrospective: a run that ends early otherwise loses what it learned (live case: E11 surfaced in #18/#19, landed only at #22). Capture is recording, not whitelist progress. The retrospective's re-check gives mid-run entries their first verification.
 
+## Regressions & rollback
+
+A landed round that later proves broken is **reverted, never patched forward silently** (borrowed from Aider's test-failure auto-undo and Gemini CLI's checkpoint /restore — with its rollback bug as the cautionary tale: a blind restore can flatten half-updated state, so evolve reverts whole round commits, never file-level snapshots):
+
+1. Demonstrate the regression RED on the current HEAD against the locked verify command (or the specific check that regressed) — a regression is proven, not remembered.
+2. `git revert --no-edit <round-commit>` — one round commit reverts as a unit; the ~300-line cap is what makes this safe.
+3. Run the locked verify command: green or the revert is incomplete — never commit over a red baseline.
+4. Record the revert as its own round line — `result(green+progress, <baseline>)`, the demonstrated red-then-green is its whitelist credential — with `regression(reverted <round>)` in the notes and the header `regressions` counter incremented (this step is the counter's setter), and the target returns to the pool (a regression is a fresh trigger).
+
 ## Long-run context management
 
 Long runs (N ≥ 10) degrade as context fills. Rules:

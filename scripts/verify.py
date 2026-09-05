@@ -579,6 +579,29 @@ if upd.exists():
 check("check-update.sh version parser is inert to hostile manifests",
       version_of_ok)
 
+# --- regressions & rollback procedure ----------------------------------------
+# The header carried a `regressions` counter since round #1, but no step ever
+# owned its setter — an E11 orphan hiding in plain sight (red line says every
+# round "stays revertible", yet the protocol never said how). Borrowed from
+# Aider's test-failure auto-undo and Gemini CLI's checkpoint /restore, with
+# that rollback bug as the cautionary tale: evolve reverts WHOLE round
+# commits, never file-level snapshots (a blind restore can flatten
+# half-updated state and make things worse than the regression).
+reg_section = skill.split("## Regressions & rollback", 1)[-1].split("## Long-run context management", 1)[0]
+check("regressions & rollback section owns the counter and the procedure",
+      "git revert" in reg_section
+      and "never patched forward" in reg_section
+      and "regressions" in reg_section
+      and "locked verify command" in reg_section
+      and "target returns to the pool" in reg_section)
+check("regression rounds need a demonstrated red before the revert",
+      "Demonstrate the regression RED" in reg_section
+      and "red-then-green" in reg_section)
+readmes = [(ROOT / "README.md").read_text(encoding="utf-8"),
+           (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")]
+check("both READMEs point at the rollback procedure",
+      all("git revert" in r for r in readmes))
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
