@@ -404,6 +404,29 @@ check("round lines in evolve-log match header 'rounds done'",
       bool(done_m) and len(round_lines) == int(done_m.group(1)),
       f"{len(round_lines)} round lines vs rounds done {done_m.group(1) if done_m else '—'}")
 
+# E4's letter: header counters equal the sum of the round lines. The count
+# above is guarded; the findings sum was manual-only until it drifted live
+# (review of #23-#32: header 63 vs sum 64, off by one at #27) — this check
+# makes the sum suite-enforced, and fails closed on malformed round lines.
+round_rows = [l for l in log_text.splitlines() if re.match(r"^#\d+ \|", l)]
+find_vals, act_vals = [], []
+for l in round_rows:
+    mf = re.search(r"\| findings\((\d+)\) \|", l)
+    ma = re.search(r"\| actions\((\d+)\) \|", l)
+    if mf:
+        find_vals.append(int(mf.group(1)))
+    if ma:
+        act_vals.append(int(ma.group(1)))
+hdr_find_m = re.search(r"findings (\d+) \| fixes (\d+) \| regressions (\d+)", log_text)
+check("header findings counter equals the sum of round lines (E4)",
+      bool(hdr_find_m)
+      and len(find_vals) == len(round_rows)
+      and sum(find_vals) == int(hdr_find_m.group(1)),
+      f"sum {sum(find_vals)} of {len(find_vals)}/{len(round_rows)} rows vs header {hdr_find_m.group(1) if hdr_find_m else '—'}")
+check("header fixes counter stays within the sum of round actions",
+      bool(hdr_find_m) and int(hdr_find_m.group(2)) <= sum(act_vals),
+      f"fixes {hdr_find_m.group(2) if hdr_find_m else '—'} vs actions sum {sum(act_vals)}")
+
 # The epics register template must carry the review gate and the family
 # placeholder convention — a template teaching `&lt;`-escaped placeholders,
 # or missing the never-execute gate, breeds copies that drift from the
@@ -447,6 +470,9 @@ lessons_header = lessons_text.split("## distribution", 1)[0]
 check("lessons.md header documents the mid-run capture convention",
       "Mid-run capture" in lessons_header
       and "verified 0" in lessons_header)
+check("SKILL.md step 7 defines the fixes-counter semantics",
+      "fixes" in step7_span
+      and "subset of actions" in step7_span)
 
 # --- protocol-drift notice ---------------------------------------------------
 # Silent plugin updates strand long-lived sessions on a stale protocol (live
@@ -502,8 +528,6 @@ skill_lines = skill.count("\n") + (0 if skill.endswith("\n") or not skill else 1
 check("SKILL.md body stays lean (<500 lines)",
       skill_path.exists() and 0 < skill_lines < 500,
       f"{skill_lines} lines")
-shipped = [skill] + [p.read_text(encoding="utf-8")
-                     for p in (ROOT / "docs" / "templates").glob("*.md")]
 abs_path = re.compile(r"[A-Za-z]:[\\/]|/Users/")
 offenders = [p.name for p in (ROOT / "docs" / "templates").glob("*.md") if abs_path.search(p.read_text(encoding="utf-8"))]
 check("shipped protocol files carry no machine-specific absolute paths",
