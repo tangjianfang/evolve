@@ -491,6 +491,24 @@ profiling_span = skill.split("## Project profiling", 1)[-1].split("## Pool refre
 check("SKILL.md profiling tells the copier about the seed entries",
       "seed" in profiling_span.lower())
 
+# --- packaging quality lint --------------------------------------------------
+# Community skill-quality standard (VoltAgent/awesome-agent-skills, eskill
+# validator): a skill body stays lean (<500 lines — metadata is all a picker
+# sees, the body is what every round loads) and portable (no machine-specific
+# absolute paths — the skill runs on any box; live case: this repo's own
+# operator pasted a Windows cache path as the skill reference).
+skill_lines = skill.count("\n") + (0 if skill.endswith("\n") or not skill else 1)
+check("SKILL.md body stays lean (<500 lines)",
+      skill_path.exists() and 0 < skill_lines < 500,
+      f"{skill_lines} lines")
+shipped = [skill] + [p.read_text(encoding="utf-8")
+                     for p in (ROOT / "docs" / "templates").glob("*.md")]
+abs_path = re.compile(r"[A-Za-z]:[\\/]|/Users/")
+offenders = [p.name for p in (ROOT / "docs" / "templates").glob("*.md") if abs_path.search(p.read_text(encoding="utf-8"))]
+check("shipped protocol files carry no machine-specific absolute paths",
+      not abs_path.search(skill) and not offenders,
+      f"{offenders or ''}")
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
