@@ -62,7 +62,7 @@ Step 0 · 每会话必读: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/evol
   ▼
 ───────── 每轮七步闭环 · i = 1..N · 严格顺序 ─────────
 
-  1. 选目标       从目标池按 Tier 1→4 取下一项 (指针存 log 头部)
+  1. 选目标        从目标池按 Tier 1→4 取下一项 (指针存 log 头部)
       ↓
   2. 视觉 review   haiku 子代理, 仅 UI 目标且有截图机制
       │            (发现必须复核 — 实践约 15% 是幻报)
@@ -82,10 +82,10 @@ Step 0 · 每会话必读: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/evol
       │            拨指针、更新计数 (头部计数必须 ≡ 轮次行之和)
       │
       ├─→ i < N: 回到 1  (每 10 轮: 写 checkpoint + 池刷新,
-      │              建议开新会话从指针续跑)
+      │                 建议开新会话从指针续跑)
       │
       └─→ 目标触发史诗升级标准 (a–f)?
-                         ──► 提案写入 docs/epics.md (占本轮行动位; 仅提案 ≠ 进步,
+      │                  ──► 提案写入 docs/epics.md (占本轮行动位; 仅提案 ≠ 进步,
                               熔断 3 连续无进步即停); 运行结束浮出 → 用户 review
                               → 批准后走独立 spec→plan, 不由轮次执行;
                               分解出的切片可回到 Tier 4 backlog

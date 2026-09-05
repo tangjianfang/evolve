@@ -649,6 +649,12 @@ check("regressions & rollback section owns the counter and the procedure",
 check("regression rounds need a demonstrated red before the revert",
       "Demonstrate the regression RED" in reg_section
       and "red-then-green" in reg_section)
+check("rollback procedure owns the log-conflict resolution rule",
+      "keeping the log fully intact" in reg_section
+      and "never the record" in reg_section)
+check("EN diagram uses suggest-language for the session handoff (ZH parity)",
+      "suggest a fresh session resuming from the pointer" in readme_en.read_text(encoding="utf-8")
+      and "hand off to a fresh session" not in readme_en.read_text(encoding="utf-8"))
 readmes = [(ROOT / "README.md").read_text(encoding="utf-8"),
            (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")]
 check("both READMEs point at the rollback procedure",

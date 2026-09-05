@@ -84,10 +84,10 @@ Step 0 · every session reads: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/
       │             counters updated (header counters ≡ sum of round lines)
       │
       ├─→ i < N: back to 1  (every 10 rounds: checkpoint + pool refresh,
-      │                 hand off to a fresh session resuming from the pointer)
+      │                      suggest a fresh session resuming from the pointer)
       │
       └─→ target hits the epic-escalation standard (a–f)?
-                         ──► proposal written to docs/epics.md (consumes a
+      │                  ──► proposal written to docs/epics.md (consumes a
                               round action; proposing alone ≠ progress — the
                               breaker caps streaks); surfaces at run end →
                               user review → approved runs its own spec→plan,
@@ -112,7 +112,8 @@ Termination: N rounds done / early convergence / breaker / epics pending /
   Tier 2 test-coverage gaps
   Tier 3 module rotation (re-listed from the current src/ layout)
   Tier 4 small-extension backlog (big items go through spec→plan, not rounds)
-  refresh: every 10 rounds or one full sweep (drop fixed, re-list modules)
+  refresh: every 10 rounds or one full sweep (drop fixed, re-list modules;
+            part of that round's work, no separate commit)
   convergence: a target clean 2 consecutive rounds → out for 10 rounds;
                3 consecutive all-clean rounds + empty backlog → early stop
 
@@ -121,7 +122,8 @@ Termination: N rounds done / early convergence / breaker / epics pending /
     measured improvement / inspector-confirmed fix
   adversarial inspector: gets the bug + the tests, never the fix; told to refute
   novelty guard (vs last 10 rounds) · difficulty guard (2 trivial rounds →
-    next must be Tier 1) · verify command locked · retrospective replay audit
+    next must be Tier 1) · verify command locked (own commit to change) ·
+    retrospective replay audit
 
 [state lives in the project — the resume-from-pointer foundation]
   docs/evolve-log.md   verify command · pointer · rounds done · metrics · round lines

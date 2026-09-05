@@ -103,7 +103,7 @@ Rounds are deliberately small (fix → optimize → extend). When round-sized wo
 A landed round that later proves broken is **reverted, never patched forward silently** (borrowed from Aider's test-failure auto-undo and Gemini CLI's checkpoint /restore — with its rollback bug as the cautionary tale: a blind restore can flatten half-updated state, so evolve reverts whole round commits, never file-level snapshots):
 
 1. Demonstrate the regression RED on the current HEAD against the locked verify command (or the specific check that regressed) — a regression is proven, not remembered.
-2. `git revert --no-edit <round-commit>` — one round commit reverts as a unit; the ~300-line cap is what makes this safe.
+2. `git revert --no-edit <round-commit>` — one round commit reverts as a unit; the ~300-line cap is what makes this safe. If the revert conflicts inside `docs/evolve-log.md` — expected for any non-latest round, later round lines interleave — resolve by keeping the log fully intact: round lines are history, the revert removes the round's effect on code and shipped docs, **never the record**; re-add any line the revert deleted, keep all later rounds' lines, then continue.
 3. Run the locked verify command: green or the revert is incomplete — never commit over a red baseline.
 4. Record the revert as its own round line — `result(green+progress, <baseline>)`, the demonstrated red-then-green is its whitelist credential — with `regression(reverted <round>)` in the notes and the header `regressions` counter incremented (this step is the counter's setter), and the target returns to the pool (a regression is a fresh trigger).
 
