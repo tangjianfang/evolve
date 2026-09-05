@@ -12,6 +12,11 @@
 #                                one line ONLY when a newer release exists
 #   check-update.sh --compare A B
 #                                print newer|equal|older for B vs A (offline)
+#   check-update.sh --version-of <file>
+#                                extract the version string of a manifest file
+#                                (test seam: proves the parser is inert to
+#                                hostile content — only [0-9.] can survive,
+#                                so fetched text can never reach a shell)
 #
 # Safety: 5s timeout, silent on any failure (offline = no output, exit 0).
 # Override the remote URL for tests via EVOLVE_VERSION_URL.
@@ -46,6 +51,10 @@ case "${1-}" in
     --compare)
         [ $# -eq 3 ] || exit 2
         compare "$2" "$3"
+        ;;
+    --version-of)
+        [ $# -eq 2 ] && [ -f "$2" ] || exit 2
+        version_of "$2"
         ;;
     "")
         # remote first: a manifest we cannot read must not silence a drift notice
