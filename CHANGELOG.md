@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2026-09-05
+
+Epic escalation (innovation/refactor graduation behind a user review gate), the nine-role senior-team model, bilingual architecture diagrams, token-waste guards, and the pending-epics breaker channel — landed across evolve rounds #15–#19 with the verification suite growing 74 → 86 checks.
 
 ### Added
 
