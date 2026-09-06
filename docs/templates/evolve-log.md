@@ -4,6 +4,9 @@
 <!-- optional — declare only to authorize auto-push in autonomous runs:
 - push: auto-authorized
 -->
+<!-- optional — declare when the user names a visual-review model (default haiku):
+- visual-model: <model name>
+-->
 <!-- optional — present from the first epic proposal on, kept current every round:
 - epics pending: <EP-ids or none>
 -->

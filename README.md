@@ -17,7 +17,7 @@ Each round is a strict seven-step loop, run by a senior engineering team — the
 | Role | Executor | Responsibility (mechanism) |
 |---|---|---|
 | Tech Lead | the session | target selection, pool priority & refresh, convergence calls, epic graduation calls, diff-cap scope control |
-| Senior UX Quality Engineer | haiku subagent · read-only · returns an issue list only | visual review (UI targets with screenshots only): layout, overflow, contrast, scaling |
+| Senior UX Quality Engineer | visual-model subagent (default haiku; user-named override) · read-only · returns an issue list only | visual review (UI targets with screenshots only): layout, overflow, contrast, scaling |
 | Senior Code Reviewer | the session | code review: project conventions + generic defect classes |
 | Senior Developer — sole writer | the session (never delegated) | fixes, optimizations, small extensions |
 | Senior QA Engineer | the session | red-then-green tests, baseline only grows, runs the locked verify command |
@@ -27,7 +27,7 @@ Each round is a strict seven-step loop, run by a senior engineering team — the
 | SRE on call | scripts (`auto-evolve.sh` + `breaker.sh`), unattended | circuit breaker, metrics, checkpoints, replay audit |
 
 1. **Pick a target** from a 4-tier priority pool (known issues → test gaps → module rotation → backlog); the pool is re-scanned every 10 rounds so it never iterates against a stale map
-2. **Visual review** — delegated to a haiku subagent; findings are cross-checked before acting (≈15% hallucinated findings in practice)
+2. **Visual review** — delegated to the visual-model subagent (default haiku; a user-named model overrides); findings are cross-checked before acting (≈15% hallucinated findings in practice)
 3. **Code review** — project conventions + common checks (error handling, concurrency, leaks, dead code, hardcoding, performance); review scope is cost-guarded by module size
 4. **Act** — 1–3 items per round, by priority: fix → optimize → small extension
 5. **Verify** — run the project's own build/test commands; all green or the round doesn't count
@@ -63,7 +63,8 @@ Step 0 · every session reads: CLAUDE.md/AGENTS.md → docs/lessons.md → docs/
 
   1. pick target    next pool item by tier priority 1→4 (pointer in the log header)
       ↓
-  2. visual review  haiku subagent, UI targets with screenshots only;
+  2. visual review  visual-model subagent (default haiku; user-named
+      │             override), UI targets with screenshots only;
       │             findings must be re-verified (~15% hallucinated)
       ↓
   3. code review    Senior Code Reviewer (the session): project conventions +

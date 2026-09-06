@@ -12,7 +12,7 @@ The loop is staffed as a senior engineering team. "Senior" means accountability,
 | Role | Step / mechanism | Executor & permissions |
 |---|---|---|
 | Tech Lead | pick target, pool priority & refresh, convergence calls, epic graduation calls, diff-cap scope control | the session |
-| Senior UX Quality Engineer | visual review (UI targets with a screenshot mechanism only): broken layout, overflow, contrast, scaling anomalies | haiku subagent, Read/Bash only (R2), returns an issue list only |
+| Senior UX Quality Engineer | visual review (UI targets with a screenshot mechanism only): broken layout, overflow, contrast, scaling anomalies | visual-model subagent (default haiku; a user-named model overrides), Read/Bash only (R2), returns an issue list only |
 | Senior Code Reviewer | code review: project conventions + generic defect classes | the session |
 | Senior Developer — sole writer | fix bugs / optimize / extend (1–3 items per round) | the session — never delegated to subagents (single writer per tree, E9) |
 | Senior QA Engineer | red-then-green tests, baseline only grows, runs the locked verify command | the session |
@@ -21,7 +21,7 @@ The loop is staffed as a senior engineering team. "Senior" means accountability,
 | Knowledge Steward | round records, lessons library, crystallization | the session |
 | SRE on call | circuit breaker, metrics counters, checkpoints, replay audit | scripts (`auto-evolve.sh` + `breaker.sh`), unattended |
 
-Two mechanics in the table are load-bearing. The UX review is delegated via the `Agent` tool with `model: haiku` and Read/Bash permissions (R2) and runs only when the target is UI and the project has a screenshot mechanism — otherwise the step is skipped and code review is weighted heavier. Every writing role is executed by the current session, never delegated: one writer per tree (E9), with delegated eyes reserved for the two spots where they pay — cheap eyes (UX walk) and independent eyes (inspection).
+Two mechanics in the table are load-bearing. The UX review is delegated via the `Agent` tool with `model: <visual model>` — default haiku, a user-named model overrides (platforms without haiku pick their own light tier; the named model is read from the header every round) — with Read/Bash permissions (R2), and runs only when the target is UI and the project has a screenshot mechanism — otherwise the step is skipped and code review is weighted heavier. Every writing role is executed by the current session, never delegated: one writer per tree (E9), with delegated eyes reserved for the two spots where they pay — cheap eyes (UX walk) and independent eyes (inspection).
 
 ## Input
 
@@ -55,7 +55,7 @@ Generate the initial `docs/evolve-log.md`:
    - Tier 2, test coverage gaps;
    - Tier 3, module rotation review: list modules from the `src/` directory structure;
    - Tier 4, backlog of small extensions (big items go through their own spec→plan flow, not into rounds — targets graduate there via **Epic escalation**, below).
-3. Header block: `- verify: <command>`, `- pointer: #1 (next round)`, `- rounds done: 0`, `- status: initialized`, plus running counters `- metrics: findings 0 | fixes 0 | regressions 0`. Autonomous runs may also declare `- push: auto-authorized` (see Autonomous mode) — add it only when the user has explicitly authorized auto-push. From the first proposal on, the header also carries `- epics pending: <ids or none>` (Epic escalation, rule 3).
+3. Header block: `- verify: <command>`, `- pointer: #1 (next round)`, `- rounds done: 0`, `- status: initialized`, plus running counters `- metrics: findings 0 | fixes 0 | regressions 0`. Autonomous runs may also declare `- push: auto-authorized` (see Autonomous mode) — add it only when the user has explicitly authorized auto-push. When the user names a visual-review model ("use GLM-5.3-Flash for visual review"), record `- visual-model: <name>` — step 2 reads it every round; absent means default haiku. From the first proposal on, the header also carries `- epics pending: <ids or none>` (Epic escalation, rule 3).
 
 ## Pool refresh (every 10 rounds, or after one full sweep of the pool)
 
@@ -89,7 +89,7 @@ Rounds are deliberately small (fix → optimize → extend). When round-sized wo
 ## Per-round loop (strict order)
 
 1. **Pick a target**: next item from the pool by tier priority 1→4 (pointer lives in the `docs/evolve-log.md` header). Time-budgeted run: check the clock first (see Input) — budget exhausted → this round is the retrospective and the run ends there. No unparked target left → end the run early and report "pending epic decisions" (Convergence & termination).
-2. **Visual review** (UI targets with screenshot capability only): delegate the haiku subagent, prompt template: "This is a screenshot of <area> of <project>. List visual/interaction problems: broken layout, overflow, occlusion, insufficient contrast, scaling anomalies, abnormal spacing, missing copy — ordered by severity. If there are none, answer 'clean'." Every finding must be re-verified before acting (R1: ~15% hallucinated findings — cross-check the source, re-screenshot, or re-run tests).
+2. **Visual review** (UI targets with screenshot capability only): delegate the visual-model subagent (default haiku; a user-named model overrides — read from the header's `- visual-model:` line when present), prompt template: "This is a screenshot of <area> of <project>. List visual/interaction problems: broken layout, overflow, occlusion, insufficient contrast, scaling anomalies, abnormal spacing, missing copy — ordered by severity. If there are none, answer 'clean'." Every finding must be re-verified before acting (R1: ~15% hallucinated findings — cross-check the source, re-screenshot, or re-run tests).
 3. **Code review** — scope by module size (cost guard): small module (≤ ~2000 lines) → read the target sources and tests in full; large module → read the files named by the target and their tests first, expand outward only when findings demand it. Focus = the project CLAUDE.md convention checklist + generic checks (error handling, concurrency/lock boundaries, resource leaks, dead code, hardcoding, performance).
 4. **Act** (1–3 items this round, by priority): fix bugs (confirmed review findings first) → optimize existing features → pick a backlog extension that fits in one round.
 5. **Verify**: run the commands declared in the evolve-log header; all green or the round doesn't count; re-screenshot UI changes. If the same action fails verify 3 times in a row, stop grinding — discard or revert the uncommitted work, record `result(red)` with the failure evidence, and end the round; the next round picks a different target — a target that keeps resisting round-sized work is an **Epic escalation** candidate (see the trigger standard).

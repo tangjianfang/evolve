@@ -734,6 +734,37 @@ check("autonomous mode documents --until/--for and the reserve",
 check("both READMEs document time-budgeted runs",
       all("--until" in r and "--for" in r for r in readmes))
 
+# --- user-named visual-review model ------------------------------------------
+# The protocol hardcoded "haiku" as THE visual-review model — but haiku does
+# not exist on every platform that runs this skill (ZCode/GLM, Gemini CLI…).
+# The mechanism is "cheap eyes", not a model name: haiku is the default, a
+# user-named model always overrides (user instructions take priority), and a
+# named model is recorded in the log header (`- visual-model:`) so resumed
+# sessions keep it. The header field is a preference, not terminating state —
+# nothing resets it (E11: reader = step 2 of every round, benign).
+role_span = skill.split("| Senior UX Quality Engineer", 1)[-1].split("| Senior Code Reviewer", 1)[0]
+check("role table makes haiku the default, user-named model overrides",
+      "default haiku" in role_span
+      and "user-named" in role_span)
+mech_span = skill.split("Two mechanics in the table are load-bearing", 1)[-1].split("## Input", 1)[0]
+check("mechanics paragraph delegates to the visual model, not a hardcoded name",
+      "default haiku" in mech_span
+      and "user-named" in mech_span
+      and "model: <visual model>" in mech_span)
+step2_span = skill.split("2. **Visual review**", 1)[-1].split("3. **Code review**", 1)[0]
+check("step 2 reads the user-named visual model from the header",
+      "user-named" in step2_span
+      and "- visual-model:" in step2_span)
+profiling_span2 = skill.split("## Project profiling", 1)[-1].split("## Pool refresh", 1)[0]
+check("profiling defines the optional visual-model header field",
+      "visual-model" in profiling_span2)
+tpl_log_text = (ROOT / "docs" / "templates" / "evolve-log.md").read_text(encoding="utf-8")
+check("evolve-log template ships the optional visual-model line",
+      "- visual-model:" in tpl_log_text)
+check("README role tables carry default haiku with the override",
+      "default haiku" in readme_en.read_text(encoding="utf-8")
+      and "默认 haiku" in readme_zh.read_text(encoding="utf-8"))
+
 # --- summary ----------------------------------------------------------------
 
 print(f"\n{checks - len(failures)}/{checks} checks passed")
