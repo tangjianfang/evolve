@@ -191,6 +191,15 @@ scripts/auto-evolve.sh /path/to/project 50
 
 Prepend `--dry-run` to validate the configuration and print the plan (project, rounds, permissions, log pointer, breaker state, hook) without spawning any session — pilot the wiring for free before committing to a long run.
 
+**Time-budgeted runs** — iterate by deadline or duration instead of count:
+
+```
+scripts/auto-evolve.sh /path/to/project --until "2026-09-07 09:00"
+scripts/auto-evolve.sh /path/to/project --for 5h
+```
+
+The budget is cooperative (checked at the top of each iteration, per industry practice): it gates round launches only and never kills a session mid-round — a hard `timeout` wrapper would lose uncommitted round work. While more than the reserve remains (`AUTO_EVOLVE_MIN_RESERVE`, default 900s), normal rounds launch; when the reserve is reached the driver itself launches the one mandatory final retrospective session. `AUTO_EVOLVE_MAX_ROUNDS` (default 0 = unlimited) caps a long budget. `--until` needs GNU date (Linux / Git Bash; macOS via coreutils `gdate`). Interactively, the same budgets work in natural language: "iterate until 9am" / "迭代5小时".
+
 Prerequisites: one interactive round first (profiling), and either a permissions allow-list in the project's `.claude/settings.local.json` or `--danger` on a trusted project. Cost scales linearly with N — pilot with a small N (e.g. 5) to validate profiling and permissions before launching long runs. Allow-list rule prefixes must match the session's shell tool — `Bash(...)` rules do not cover a PowerShell session (Windows default), so add parallel `PowerShell(...)` rules for the verify command and git, and invoke verify as a single command (chained `a && b` fails static validation). Every round must earn `green+progress` through the whitelist — new tests, red-then-green fixes, measured improvements, or inspector-confirmed fixes; 3 consecutive no-progress rounds — or 3 consecutive failed sessions — stop the run, as does a `status: pending-epics` header (every remaining target parked awaiting an epic decision). Auto-push only when the project's log header declares `push: auto-authorized`. Set `AUTO_EVOLVE_ROUND_HOOK='<command>'` to run a command after every successful round (notification, deploy, metrics export) — a hook failure is reported but never stops the run, and failed sessions fire no hook.
 
 ## License

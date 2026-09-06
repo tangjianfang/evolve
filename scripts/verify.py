@@ -368,7 +368,7 @@ check("driver survives a failed round session instead of dying under set -e",
 # switch the final round to retrospective instructions. Wiring check — the
 # prompt itself cannot be executed without launching claude.
 check("driver tells each session its run position (final round → retrospective)",
-      'POSITION="This is driver round $i of $N."' in driver
+      'POSITION="This is driver round $launched of $N."' in driver
       and "$POSITION Step 0" in driver
       and '-eq "$N"' in driver
       and "run the RETROSPECTIVE" in driver)
@@ -377,10 +377,13 @@ check("driver tells each session its run position (final round → retrospective
 # arithmetic evaluates an identifier like '--danger' to 0, so a swapped
 # argument list would silently run zero rounds. The guard must be negated
 # (reject-inverted mutants pass a plain 'if [[ ... ]]') and an explicitly
-# empty <rounds> must reach it, not fall through to the default.
+# empty <rounds> must reach it, not fall through to the default. Since the
+# time-budget grammar (#36) the default and the validation are split across
+# the case ("" → 5) and the guard (budget mode exempt — it has no N).
 check("driver validates <rounds> as a positive integer",
-      'if ! [[ "$N" =~ ' in driver and "[1-9][0-9]*$" in driver
-      and "N=${2-5}" in driver)
+      'if [ -z "$BUDGET_MODE" ] && ! [[ "$N" =~ ' in driver
+      and "[1-9][0-9]*$" in driver
+      and "N=5" in driver)
 
 # The driver's per-round prompt must remind sessions of the FULL result
 # vocabulary — it listed 4 of 5 states (interrupted missing) while SKILL.md
@@ -686,6 +689,50 @@ check("driver header documents --dry-run",
       "dry-run" in driver_header)
 check("both READMEs document --dry-run",
       all("--dry-run" in r for r in readmes))
+
+# --- time-budgeted runs -------------------------------------------------------
+# Count-only iteration excluded the most natural automation ask — "run until
+# 09:00 / for 5 hours". Prior art is a hard `timeout` wrapper, which kills a
+# session mid-round (uncommitted work lost, E9-class tree hazards); the
+# adopted mechanism (industry consensus: check budgets at the TOP of each
+# loop iteration, layered with a reserve) is a cooperative deadline: it gates
+# round LAUNCHES only, reserves a slice for the mandatory retrospective, and
+# the driver launches that final session itself (T1g: the retrospective must
+# not depend on a session guessing the clock). Dry-run spawns no sessions, so
+# the budget paths are E8-executable.
+time_dry = run_driver("--dry-run", str(ROOT), "--for", "2h")
+check("driver --for dry-run prints the time-budget plan",
+      time_dry.returncode == 0
+      and "time-budget" in time_dry.stdout
+      and "deadline" in time_dry.stdout
+      and "reserve" in time_dry.stdout
+      and "~0 min remain" not in time_dry.stdout,
+      "a 2h budget must not report ~0 minutes (BASH_REMATCH cleared by a second =~?)")
+rej = [run_driver("--dry-run", str(ROOT), "--until", "2000-01-01 09:00").returncode,
+       run_driver("--dry-run", str(ROOT), "--for", "5x").returncode,
+       run_driver("--dry-run", str(ROOT), "--for", "1h", "7").returncode]
+check("driver rejects past --until, malformed --for, and budget+rounds mix",
+      rej == [1, 1, 1],
+      f"rc {rej}")
+check("driver wires the time-mode position and the final retrospective session",
+      "TIME-BUDGETED" in driver
+      and "FINAL session of a" in driver
+      and "AUTO_EVOLVE_MIN_RESERVE" in driver_header)
+input_span = skill.split("## Input", 1)[-1].split("## Step 0", 1)[0]
+check("SKILL.md Input defines time-budgeted runs (deadline gates round starts)",
+      "time budget" in input_span
+      and "until" in input_span
+      and "never kills a session mid-round" in input_span)
+step1_span = skill.split("1. **Pick a target**", 1)[-1].split("2. **Visual review**", 1)[0]
+check("SKILL.md step 1 owns the clock check for budgeted runs",
+      "check the clock" in step1_span)
+auto_span = skill.split("## Autonomous mode", 1)[-1].split("## Anti-gaming", 1)[0]
+check("autonomous mode documents --until/--for and the reserve",
+      "--until" in auto_span
+      and "--for" in auto_span
+      and "AUTO_EVOLVE_MIN_RESERVE" in auto_span)
+check("both READMEs document time-budgeted runs",
+      all("--until" in r and "--for" in r for r in readmes))
 
 # --- summary ----------------------------------------------------------------
 

@@ -183,6 +183,15 @@ scripts/auto-evolve.sh /path/to/project 50
 
 加上 `--dry-run` 前缀可只校验配置并打印执行计划（项目、轮数、权限、log 指针、熔断状态、钩子），不会启动任何会话——长跑之前先免费验证一遍接线。
 
+**按时间预算迭代** —— 用截止时刻或时长代替轮数：
+
+```
+scripts/auto-evolve.sh /path/to/project --until "2026-09-07 09:00"
+scripts/auto-evolve.sh /path/to/project --for 5h
+```
+
+预算是协作式的（按业界惯例在每轮迭代顶部检查）：只拦截"是否再开一轮"，绝不中途杀死会话——硬 `timeout` 包裹会丢失未提交的轮次工作。剩余时间多于预留（`AUTO_EVOLVE_MIN_RESERVE`，默认 900 秒）就继续开正常轮；预留到达后由 driver 自己启动那一个必需的收尾复盘会话。`AUTO_EVOLVE_MAX_ROUNDS`（默认 0 = 不限）可为长预算封顶。`--until` 需要 GNU date（Linux / Git Bash；macOS 装 coreutils 用 `gdate`）。交互模式下同样支持自然语言："迭代到9点" / "迭代5小时"。
+
 前提：先手动跑一轮交互迭代（完成项目画像），并为项目配置 `.claude/settings.local.json` 权限白名单（或在可信项目上用 `--danger`）。成本随 N 线性增长——大 N 长跑前先用小 N（如 5 轮）试跑，确认画像与权限都通，再放量。白名单规则前缀必须匹配会话的 shell 工具——`Bash(...)` 规则不覆盖 PowerShell 会话（Windows 默认），需为 verify 命令和 git 平行添加 `PowerShell(...)` 规则，且 verify 需以单条命令调用（链式 `a && b` 无法通过静态校验）。每轮必须通过进步白名单挣得 `green+progress`——新增测试、先红后绿修复、可测量改善、或验收员确认的修复；连续 3 轮无进步或连续 3 次会话失败自动熔断；`status: pending-epics`（全部剩余目标停摆等待史诗决策）同样停机。仅当项目 log 头部声明 `push: auto-authorized` 时才自动 push。设置 `AUTO_EVOLVE_ROUND_HOOK='<命令>'` 可在每个成功轮次后执行一条命令（通知、部署、导出指标）——钩子失败只报告、绝不中断 run，失败的会话不触发钩子。
 
 ## 许可证

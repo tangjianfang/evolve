@@ -26,6 +26,7 @@ Two mechanics in the table are load-bearing. The UX review is delegated via the 
 ## Input
 
 - Round count N (user says "iterate 50 times" → N=50). Default 5 when unspecified.
+- OR a **time budget**: an absolute deadline ("iterate until 2026-09-07 09:00" / "迭代到9点") or a duration ("iterate for 5 hours" / "迭代5小时"). Before each round, check the clock (`date`): past the deadline, or the remaining time no longer fits a round plus the mandatory retrospective (default reserve ~15 min) → the run ends and this round IS the retrospective. The deadline gates round starts — it **never kills a session mid-round**; a long final round may overshoot slightly, by design (industry consensus: budgets are checked at loop boundaries, not mid-call). Both may be given: the run stops at whichever limit comes first. Checkpoints record the deadline so a fresh session resumes the same budget; the autonomous driver states it in every session prompt (no new persistent header state — E11).
 
 ## Step 0 (mandatory): read project data
 
@@ -87,7 +88,7 @@ Rounds are deliberately small (fix → optimize → extend). When round-sized wo
 
 ## Per-round loop (strict order)
 
-1. **Pick a target**: next item from the pool by tier priority 1→4 (pointer lives in the `docs/evolve-log.md` header). No unparked target left → end the run early and report "pending epic decisions" (Convergence & termination).
+1. **Pick a target**: next item from the pool by tier priority 1→4 (pointer lives in the `docs/evolve-log.md` header). Time-budgeted run: check the clock first (see Input) — budget exhausted → this round is the retrospective and the run ends there. No unparked target left → end the run early and report "pending epic decisions" (Convergence & termination).
 2. **Visual review** (UI targets with screenshot capability only): delegate the haiku subagent, prompt template: "This is a screenshot of <area> of <project>. List visual/interaction problems: broken layout, overflow, occlusion, insufficient contrast, scaling anomalies, abnormal spacing, missing copy — ordered by severity. If there are none, answer 'clean'." Every finding must be re-verified before acting (R1: ~15% hallucinated findings — cross-check the source, re-screenshot, or re-run tests).
 3. **Code review** — scope by module size (cost guard): small module (≤ ~2000 lines) → read the target sources and tests in full; large module → read the files named by the target and their tests first, expand outward only when findings demand it. Focus = the project CLAUDE.md convention checklist + generic checks (error handling, concurrency/lock boundaries, resource leaks, dead code, hardcoding, performance).
 4. **Act** (1–3 items this round, by priority): fix bugs (confirmed review findings first) → optimize existing features → pick a backlog extension that fits in one round.
@@ -120,7 +121,7 @@ Long runs (N ≥ 10) degrade as context fills. Rules:
 
 Fully automated runs: the user launches `scripts/auto-evolve.sh <project> <N>` (a driver looping headless `claude -p` sessions) and walks away. Differences from interactive mode:
 
-1. **One round per session** — each headless session runs exactly one round and exits; the driver owns rounds 1..N, and Step 0's pointer makes every session resume cleanly. Context is always fresh: the compaction problem disappears by construction. The driver's prompt states each session's position (`round i of N`) and flags round N as the retrospective — sessions cannot infer this from the log alone (T1g, proved live: a run's final round silently did a normal round instead).
+1. **One round per session** — each headless session runs exactly one round and exits; the driver owns rounds 1..N, and Step 0's pointer makes every session resume cleanly. Context is always fresh: the compaction problem disappears by construction. The driver's prompt states each session's position (`round i of N`) and flags round N as the retrospective — sessions cannot infer this from the log alone (T1g, proved live: a run's final round silently did a normal round instead). Time-budgeted runs: the driver accepts `--until <datetime>` (GNU date) or `--for <duration>` (e.g. `5h`, `90m`), launches normal rounds only while more than the reserve remains (`AUTO_EVOLVE_MIN_RESERVE`, default 900s; optional `AUTO_EVOLVE_MAX_ROUNDS` cap, 0 = unlimited), states the deadline and remaining minutes in every session prompt, and — when the budget is reached — launches ONE final retrospective session itself; the mandatory retrospective must not depend on a session guessing the clock (T1g). The budget gates round launches only, never kills a session mid-round.
 2. **Auto-push** — if the evolve-log header declares `- push: auto-authorized`, step 6 commits AND pushes. Without that declaration the no-push red line stands.
 3. **No user prompts** — profiling defines verification commands itself and records them as self-defined (E3); destructive operations are outright forbidden in autonomous mode (no confirmation is possible) — if a round would need one, log `result(blocked)` and pick the next target.
 4. **Circuit breaker** — 3 consecutive `no-progress` rounds → stop and report "converged or needs human input". The breaker also stops on the header channels `- status: converged` and `- status: pending-epics` (all targets parked awaiting epic decisions). Never manufacture progress to keep the loop alive.
@@ -149,6 +150,7 @@ Rules:
 - A target that is clean for 2 consecutive rounds leaves the pool for 10 rounds.
 - 3 consecutive all-clean pool rounds with an empty backlog → terminate early, report "project converged", and set the header `- status: converged` (a breaker stop channel). "Clean" must be backed by data — 0 findings and 0 regressions in those rounds — not by impression.
 - A pool with no unparked target (everything done or awaiting an epic decision) → terminate early and report "pending epic decisions" — the run cannot proceed without the user; blocked rounds must not be manufactured to fill the gap. Set the header `- status: pending-epics` so the autonomous driver's breaker stops launching sessions (a resumed run resets it to active).
+- A time budget exhausted (deadline passed, or remaining below the retrospective reserve) ends the run the same way as N rounds reached: stop starting rounds, run the retrospective. The budget gates round starts, never kills a session mid-round.
 - Every round is an independent commit; stop anytime; a resuming run continues from the log header pointer.
 - New user instructions take priority; finish them, then return to the loop.
 
